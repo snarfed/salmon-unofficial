@@ -29,7 +29,8 @@ skip_files:
 - ^(.*/)?.*/RCS/.*
 - ^(.*/)?\..*
 - ^(.*/)?.*\.bak$
-# don't need anything in the tweepy or webapp-improved subdirs, especially since
-# webapp-improved/lib/ has over 1k files!
+# don't need anything in the tweepy or webapp-improved or Salmon subdirs,
+# especially since webapp-improved/lib/ has over 1k files!
 - ^tweepy_submodule/(docs|examples|tools)/.*
 - webapp-improved/.*/.*
+- ^Salmon/(at-salmon|salmon-playground)/.*
