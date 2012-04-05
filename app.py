@@ -12,7 +12,7 @@ import os
 import urlparse
 
 import appengine_config
-import activitystreams
+import salmon
 
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
@@ -26,9 +26,9 @@ BASE_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   }
 BASE_TEMPLATE_VARS = {
-  'domain': activitystreams.SOURCE.DOMAIN,
+  'domain': salmon.SOURCE.DOMAIN,
   'host': appengine_config.HOST,
-  'auth_url': activitystreams.SOURCE.AUTH_URL,
+  'auth_url': salmon.SOURCE.AUTH_URL,
   }
 
 
@@ -66,7 +66,7 @@ class FrontPageHandler(TemplateHandler):
   """Renders and serves /, ie the front page.
   """
   def template_file(self):
-    return activitystreams.SOURCE.FRONT_PAGE_TEMPLATE
+    return salmon.SOURCE.FRONT_PAGE_TEMPLATE
 
 
 class HostMetaXrdsHandler(TemplateHandler):

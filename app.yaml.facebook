@@ -1,5 +1,5 @@
 # -*- yaml -*-
-application: facebook-activitystreams
+application: facebook-salmon
 version: 1
 threadsafe: false
 api_version: 1
@@ -21,5 +21,15 @@ handlers:
   secure: always
 
 - url: /.+
-  script: activitystreams.py
+  script: salmon.py
   secure: always
+
+skip_files:
+- ^(.*/)?.*\.py[co]
+- ^(.*/)?.*/RCS/.*
+- ^(.*/)?\..*
+- ^(.*/)?.*\.bak$
+# don't need anything in the tweepy or webapp-improved subdirs, especially since
+# webapp-improved/lib/ has over 1k files!
+- ^tweepy_submodule/(docs|examples|tools)/.*
+- webapp-improved/.*/.*
