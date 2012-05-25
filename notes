@@ -1,0 +1,76 @@
+http://salmon-protocol.googlecode.com/svn/trunk/draft-panzer-salmon-00.html
+http://salmon-protocol.googlecode.com/svn/trunk/draft-panzer-magicsig-01.html
+
+===
+functionality
+===
+
+consider single global list of domains (and fb users if necessary). show all on
+front page, let people add.
+
+UX:
+
+web sites: opt in OR do discovery on all?
+
+probably need to start with a whitelist. but expand to all later? tough to
+scale, right?
+
+
+users: opt in OR crawl all public posts?
+
+similarly, start with a whitelist. expand to all later though? opt in for
+private too? what's social networking etiquette? 
+
+implementation details:
+twitter has firehose for crawling all public posts.
+facebook has...?
+
+
+salmon generation:
+1. poll source (FB/Twitter) for posts with links, searching either by opted in
+   users or by domains. use cron job or repeating task.
+2. look for comments and replies to those posts.
+3. if any replies, fetch link content and do salmon discovery. may also need to
+   do discovery on associated feed?
+4. for each reply, look for existing entity/task. add them if reply is new.
+   (see section 9 of salmon spec for how to generate reply aka salmon guids.)
+5. in task processor, send salmon to endpoint. mark task completed if endpoint
+   returns 202 or 200.
+
+get this running.
+
+then:
+5. do the same for mentions, which are basically post-independent replies.
+
+
+===
+testbed
+===
+
+http://salmon-net.appspot.com/
+
+"Your salmon endpoint is: https://salmon-net.appspot.com/salmon/3dUzgc3lq5XzmGwfTXnN1v1X-pom8dbTVkerl3oX3do
+Adding the following link element to your LRDD XRD, will cause your salmon to be sent to this net.
+<link rel="salmon" href="https://salmon-net.appspot.com/salmon/3dUzgc3lq5XzmGwfTXnN1v1X-pom8dbTVkerl3oX3do" />
+In order to facilitate testing, performing discovery on acct:3dUzgc3lq5XzmGwfTXnN1v1X-pom8dbTVkerl3oX3do@salmon-net.appspot.com will lead to the endpoint above..
+You can pick up the Salmon sent to this net here: https://salmon-net.appspot.com/feed/vi__gddYhK5U7wkZnmusC1qkqwcJUGKLFEFpPjVu3sY
+That endpoint is kind-of a secret so only you will know where to pick up your salmon. If you lose it, you'll have to create another net.
+This feed will be using the PSHB hub at http://pubsubhubbub.appspot.com."
+
+===
+salmon and magic sig python lib(s)
+===
+
+http://code.google.com/p/salmon-protocol/source/browse/#svn%2Ftrunk%2Flib%2Fpython%2Fsalmon
+
+looks decent but the salmon part may need a few bug fixes?
+http://code.google.com/p/salmon-protocol/issues/detail?id=34
+
+
+https://github.com/paulosman/django-salmon
+looks good, but tightly integrated w/django
+
+===
+misc links
+===
+http://stackoverflow.com/questions/8731750/twitter-tweets-about-a-certain-url-via-salmon-and-or-pubsubhubbub
