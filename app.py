@@ -5,7 +5,7 @@ The discovery files inside /.well-known/ include host-meta (XRD), and
 host-meta.xrds (XRDS-Simple), and host-meta.jrd (JRD ie JSON).
 """
 
-__author__ = 'Ryan Barrett <portablecontacts@ryanb.org>'
+__author__ = 'Ryan Barrett <salmon@ryanb.org>'
 
 import salmon
 import appengine_config

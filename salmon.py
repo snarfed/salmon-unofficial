@@ -18,7 +18,7 @@ from webutil import webapp2
 import appengine_config
 import facebook
 import source
-import twitter
+# import twitter
 from webutil import util
 
 from google.appengine.ext.webapp.util import run_wsgi_app
@@ -26,6 +26,6 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 # maps app id to source class
 SOURCE = {
   'facebook-salmon': facebook.Facebook,
-  'twitter-salmon': twitter.Twitter,
+  # 'twitter-salmon': twitter.Twitter,
   }.get(appengine_config.APP_ID)
 

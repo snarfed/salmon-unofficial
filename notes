@@ -47,6 +47,60 @@ then:
 testbed
 ===
 
+http://salmon-playground.appspot.com/
+
+example atom salmon, except it doesn't have thr:in-reply-to?
+
+http://groups.google.com/group/salmon-protocol/browse_thread/thread/6c6b7232cc29939e/aa8d94e96e8411f3
+
+(more: https://groups.google.com/forum/?fromgroups#!topic/salmon-protocol/09Ftk1XWVEI )
+
+thr:in-reply-to - http://www.ietf.org/rfc/rfc4685.txt
+
+
+<entry xmlns="http://www.w3.org/2005/Atom"
+       xmlns:service="http://activitystrea.ms/service-provider"
+       xmlns:activity="http://activitystrea.ms/spec/1.0/">
+  <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
+  <title type="text">@tjgillies i WILL get you to reply</title>
+  <service:provider>
+    <name>Robin</name>
+    <uri>http://redrob.in/</uri>
+    <icon>https://cliqset-applications.s3.amazonaws.com/605fcb40fef7c5b1ba5fed4...</icon>
+  </service:provider>
+  <activity:object>
+    <activity:object-type>http://activitystrea.ms/schema/1.0/note</activity:object-type>
+    <content type="text">@tjgillies i WILL get you to reply</content>
+    <link rel="alternate" type="text/html" href="http://redrob.in/statuses/983" />
+    <id>http://redrob.in/statuses/983</id>
+  </activity:object>
+  <category scheme="http://schemas.cliqset.com/activity/categories/1.0" term="StatusPosted" label="Status Posted" />
+  <updated>2010-04-02T23:10:37-07:00</updated>
+  <published>2010-04-02T23:10:37-07:00</published>
+  <id>note</id>
+  <link href="http://cliqset.com/users/tylergillies" type="text/xhtml" rel="alternate" title="tylergillies posted a note on redrob.in" />
+  <author>
+    <name>tylergillies</name>
+    <uri>acct:tylergillies@redrob.in <acct:tylergillies@redrob.in></uri>
+  </author>
+  <activity:actor xmlns:poco="http://portablecontacts.net/spec/1.0">
+    <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>
+    <poco:name>
+      <poco:givenName>Tyler</poco:givenName>
+      <poco:familyName>Gillies</poco:familyName>
+    </poco:name>
+    <link xmlns:media="http://purl.org/syndication/atommedia" type="image/png" rel="avatar"
+          href="http://avatar.identi.ca/3919-original-20080826101830.jpeg" media:height="80" media:width="80" />
+    <link xmlns:media="http://purl.org/syndication/atommedia" type="image/png" rel="avatar"
+          href="http://avatar.identi.ca/3919-original-20080826101830.jpeg" media:height="120" media:width="120" />
+    <link xmlns:media="http://purl.org/syndication/atommedia" type="image/png" rel="avatar"
+          href="http://avatar.identi.ca/3919-original-20080826101830.jpeg" media:height="200" media:width="200" />
+    <link href="http://redrob.in/users/tylergillies" rel="alternate" type="text/html" length="0" />
+    <id>http://redrob.in/users/tylergillies</id>
+  </activity:actor>
+  <link href="http://cliqset.com/user/tjgillies" rel="ostatus:attention" />
+</entry>
+
 http://salmon-net.appspot.com/
 
 "Your salmon endpoint is: https://salmon-net.appspot.com/salmon/3dUzgc3lq5XzmGwfTXnN1v1X-pom8dbTVkerl3oX3do
