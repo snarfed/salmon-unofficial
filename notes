@@ -44,6 +44,23 @@ then:
 
 
 ===
+finding comments/replies to links
+===
+twitter has streaming api, include_entities will include expanded links, can be
+checked against domain whitelist
+
+facebook is worthless. :/ no firehose or streaming api for all public posts, or
+even much of anything across users, except for search, which searches plain text
+but not links, e.g. domains. :/
+
+compare:
+
+https://developers.facebook.com/tools/explorer?method=GET&path=search%3Fq%3Dsnarfed
+
+https://developers.facebook.com/tools/explorer?method=GET&path=search%3Fq%3Dsnarfed.org
+
+
+===
 testbed
 ===
 
