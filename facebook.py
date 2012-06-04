@@ -1,5 +1,5 @@
 #!/usr/bin/python
-"""Facebook source class. Uses the Graph API.
+"""Facebook source class.
 """
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
@@ -18,10 +18,16 @@ import urlparse
 import appengine_config
 import source
 from webutil import util
+from django_salmon import magicsigs
+from django_salmon import utils
 
-# A template for generating an unsigned Atom Salmon based on a JSON Facebook
-# Graph API comment. Note that the format specifiers have mapping keys. Used in
-# comment_to_salmon().
+
+# temporary URL for fetching magic sig private keys from webfinger-unofficial
+USER_KEY_HANDLER = \
+    'https://facebook-webfinger.appspot.com/user_key?uri=%s&secret=%s'
+
+# Templates for Atom Salmons and Magic Envelopes. Note that the format
+# specifiers have mapping keys. Used in comment_to_salmon().
 ATOM_SALMON_TEMPLATE = """\
 <?xml version='1.0' encoding='UTF-8'?>
 <entry xmlns='http://www.w3.org/2005/Atom'>
@@ -37,8 +43,7 @@ ATOM_SALMON_TEMPLATE = """\
   <content>%(content)s</content>
   <title>%(title)s</title>
   <updated>%(updated)s</updated>
-</entry>
-"""
+</entry>"""
 
 
 class Facebook(source.Source):
@@ -50,7 +55,12 @@ class Facebook(source.Source):
 
 
   def comment_to_salmon(self, comment):
-    """Converts a Facebook comment in a JSON dict to an unsigned Atom Salmon.
+    """Converts a Facebook JSON comment dict to an Atom Salmon.
+
+    Args:
+      comment: JSON dict
+
+    Returns: string
 
     Raises:
       ValueError if comment['id'] cannot be parsed. It should be of the form
@@ -72,3 +82,24 @@ class Facebook(source.Source):
       'title': comment.get('message'),
       'updated': comment.get('created_time'),
       }
+
+  def envelope(self, salmon, author_uri):
+    """Signs and encloses an Atom Salmon in a Magic Signature envelope.
+
+    Fetches the author's Magic Signatures public key via LRDD in order to create
+    the signature.
+
+    Args:
+      salmon: string, an Atom Salmon
+      author_uri: string, the author's URI, beginning with acct:
+
+    Returns: JSON dict following Magic Signatures spec section 3.5:
+    http://salmon-protocol.googlecode.com/svn/trunk/draft-panzer-magicsig-01.html#anchor5
+    """
+    class Struct(object):
+      def __init__(self, **kwargs):
+        vars(self).update(**kwargs)
+
+    key_url = USER_KEY_HANDLER % (author_uri, appengine_config.USER_KEY_HANDLER_SECRET)
+    key = Struct(**json.loads(util.urlfetch(key_url)))
+    return magicsigs.magic_envelope(salmon, 'application/atom+xml', key)
