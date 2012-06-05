@@ -1,6 +1,16 @@
 http://salmon-protocol.googlecode.com/svn/trunk/draft-panzer-salmon-00.html
 http://salmon-protocol.googlecode.com/svn/trunk/draft-panzer-magicsig-01.html
 
+TODO:
+decide on post vs comment vs both (for all three sources)
+twitter
+g+
+g+ web finger magic sigs
+sending slaps
+port bridgy
+replace ui (public-only whitelist of domains)
+
+
 ===
 functionality
 ===
