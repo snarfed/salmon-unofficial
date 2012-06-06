@@ -71,6 +71,7 @@ class Facebook(source.Source):
       'id_tag': self.tag_uri(id),
       'author_name': cmt_from.get('name'),
       'author_uri': 'acct:%s@facebook-webfinger.appspot.com' % cmt_from.get('id'),
+      # TODO: this should be the original domain link
       'in_reply_to_tag': self.tag_uri(parent_id),
       'content': comment.get('message'),
       'title': comment.get('message'),
