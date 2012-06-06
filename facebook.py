@@ -4,16 +4,10 @@
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
-import cgi
-import collections
-import datetime
 try:
   import json
 except ImportError:
   import simplejson as json
-import re
-import urllib
-import urlparse
 
 import appengine_config
 import source
