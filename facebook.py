@@ -12,8 +12,6 @@ class Facebook(source.Source):
   """
 
   DOMAIN = 'facebook.com'
-  FRONT_PAGE_TEMPLATE = 'templates/facebook_index.html'
-
 
   def comment_to_salmon_vars(self, comment):
     """Extracts Salmon template vars from a JSON Facebook comment.

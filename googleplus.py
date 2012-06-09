@@ -12,7 +12,6 @@ class GooglePlus(source.Source):
   """
 
   DOMAIN = 'plus.google.com'
-  FRONT_PAGE_TEMPLATE = 'templates/googleplus_index.html'
 
   def activity_to_salmon_vars(self, activity):
     """Extracts Salmon template vars from a JSON activity.

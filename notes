@@ -1,6 +1,14 @@
 http://salmon-protocol.googlecode.com/svn/trunk/draft-panzer-salmon-00.html
 http://salmon-protocol.googlecode.com/svn/trunk/draft-panzer-magicsig-01.html
 
+TODO:
+- port bridgy
+- replace ui (public-only whitelist of domains)
+- decide on post vs comment vs both (for all three sources)
+- g+ webfinger magic sigs
+- sending slaps
+
+
 ===
 functionality
 ===

@@ -6,82 +6,52 @@
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
   <meta http-equiv="X-XRDS-Location"
         content="http://{{ host }}/.well-known/host-meta.xrds" />
-  <script type="text/javascript" src="/static/demo.js"></script>
   <link href="/static/style.css" rel="stylesheet" type="text/css" />
-  <title>ActivityStreams for {{ domain }}</title>
+  <title>Salmon Unofficial</title>
 </head>
 
-<body onload="access_token_from_fragment(); render_form();">
 <div id="description">
-<h1>ActivityStreams for {{ domain }}</h1>
+<h1>Salmon Unofficial</h1>
 
-<a href="http://activitystrea.ms/">
-  <img id="logo" src="/static/logo.png" /></a>
+<a href="http://salmon-protocol.org/">
+  <img id="logo" src="/static/salmon.png" /></a>
 
 <p>This is an unofficial
-  <a href="http://activitystrea.ms/">ActivityStreams</a> server
-for <a href="http://{{ domain }}/">{{ domain }}</a>. For more details, see the
-ActivityStreams
-<a href="http://activitystrea.ms/specs/">specs</a>,
-<a href="http://wiki.activitystrea.ms/">wiki</a>, and the
-<a href="https://github.com/snarfed/activitystreams-unofficial">source for
-this site</a>.
+  <a href="http://www.salmon-protocol.org/">Salmon</a> generator
+for
+<a href="http://www.facebook.com/">Facebook</a>,
+<a href="http://twitter.com/">Twitter</a>, and
+<a href="https://plus.google.com/">Google+</a>. For more details, see the
+<a href="http://www.salmon-protocol.org/news/finalspecdraftsavailable">Salmon
+ specs</a> and the
+<a href="https://github.com/snarfed/salmon-unofficial">source for this site</a>.
 </p>
 
-<p>This is the API endpoint:</p>
-<ul>
-  <li><code>https://{{ host }}/<a href="http://activitystrea.ms/draft-spec.html">...</a></code></li>
-</ul>
-
-<p>These are the
- <a href="http://docs.oasis-open.org/xri/xrd/v1.0/xrd-1.0.html">XRD</a> and
- <a href="http://hueniverse.com/drafts/draft-xrds-simple-01.html">XRDS-Simple</a>
- (deprecated!) discovery endpoints:</p>
-<ul>
-  <li><code>https://{{ host }}/.well-known/host-meta</code></li>
-  <li><code>https://{{ host }}/.well-known/host-meta.xrds</code></li>
-</ul>
-
-{% block oauth_details %}
-{% endblock %}
-
 <p>Questions? Contact <a href="http://snarfed.org/about">Ryan</a> or the
-<a href="http://groups.google.com/group/activity-streams">ActivityStreams
+<a href="http://groups.google.com/group/salmon-protocol">Salmon
 mailing list</a>.</p>
 
 <hr />
 </div>
 
-<h2>Demo</h2>
+<h2>Domains</h2>
 
-<form id="demo" method="get" target="results">
-<p><nobr><code>
-/ @me /
-<select id="group_id" name="group_id" onchange="render_form()">
-  <option value="all">@all</input>
-  <option value="self">@self</input>
-  <option value="friends">@friends</input>
-</select>
-/ @app /
-<input id="activity_id" name="activity_id" type="text"
-       value="activity id (optional)" size="12"
-       onkeyup="render_form()" onfocus="render_form()" onblur="render_form()" />
-       <!-- onkeyup instead of onkeypress because onkeypress fires *before* the
-            browser adds the character to the input value -->
-{% block query_params %}
-{% endblock %}
-</code></nobr></p>
+<p>This site currently sends Salmon slaps to these domains. Add your own!</p>
 
-<p>
-<input type="submit" value="GET" />
-<a href="{{ auth_url }}">Authenticate</a></p>
-</p>
+<form id="domains" method="post">
+<!-- <label for="domain">Domain: </label> -->
+<input id="domain" name="domain" type="text" size="16" />
+<input type="submit" value="Add" />
 </form>
 
-<p><nobr><code id="url"></code></nobr></p>
+<ul>
+{% for domain in domains %}
+<li><a href="http://{% domain.key.name %}/">domain.key.name</a></li>
+{% endfor %}
+</ul>
 
-<iframe name="results">
-</iframe>
+<p><a href="http://snarfed.org/about">Contact Ryan</a> if you want a domain
+removed.</p>
 
 </body>
 </html>

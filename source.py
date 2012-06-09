@@ -54,7 +54,6 @@ class Source(object):
 
   Class constants:
     DOMAIN: string, the source's domain
-    FRONT_PAGE_TEMPLATE: string, the front page child template filename
   """
 
   def __init__(self, handler):

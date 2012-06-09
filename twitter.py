@@ -12,8 +12,6 @@ class Twitter(source.Source):
   """
 
   DOMAIN = 'twitter.com'
-  FRONT_PAGE_TEMPLATE = 'templates/twitter_index.html'
-
 
   def tweet_to_salmon_vars(self, tweet):
     """Extracts Salmon template vars from a JSON tweet.

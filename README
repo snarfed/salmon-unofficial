@@ -1,11 +1,7 @@
-This is a stand-in, proxy Salmon server for sites that don't implement it
-themselves. It currently has implementations for Facebook and Twitter, served at
-these endpoints:
-
-http://facebook-salmon.appspot.com/
-http://twitter-salmon.appspot.com/
-
-Feel free to add more!
+This is a unofficial Salmon generator for sites that don't implement it
+themselves. It's deployed at http://salmon-unofficial.appspot.com/ , and
+currently has implementations for Facebook, Twitter, and Google+. Feel free to
+add more!
 
 Source: https://github.com/snarfed/salmon-unofficial
 Contact: Ryan Barrett <salmon@ryanb.org>
@@ -13,25 +9,7 @@ Contact: Ryan Barrett <salmon@ryanb.org>
 Background on Salmon:
 http://salmon-protocol.org/
 
-Twitter and Facebook support OAuth, which you'll need to use for pretty much
-everything. If you obtain an OAuth access token from Twitter or Facebook and
-include it in a request to this provider, it will be used to sign and authorize
-the underlying requests to those providers. See the demos on
-https://facebook-salmon.appspot.com/ and
-https://twitter-salmon.appspot.com/ for examples.
-
-To use this in a Salmon client, you'll need to hard-code exceptions for the
-facebook.com and twitter.com hosts and redirect Salmon HTTP requests to the
-corresponding endpoint above.
-
-Note the app.yaml.* files, one for each App Engine app id. To work on or deploy
-a specific app id, symlink app.yaml to its app.yaml.xxx file. Likewise, if you
-add a new site, you'll need to add a corresponding app.yaml.xxx file.
-
 The tests require the App Engine SDK and python-mox.
 
-Deploy commands:
-rm -f app.yaml && ln -s app.yaml.twitter app.yaml && \
-  ~/google_appengine/appcfg.py --oauth2 update . && \
-rm -f app.yaml && ln -s app.yaml.facebook app.yaml && \
-  ~/google_appengine/appcfg.py --oauth2 update .
+Deploy command:
+~/google_appengine/appcfg.py --oauth2 update .
