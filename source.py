@@ -23,8 +23,8 @@ from django_salmon import utils
 USER_KEY_HANDLER = \
     'https://facebook-webfinger.appspot.com/user_key?uri=%s&secret=%s'
 
-# Templates for Atom Salmons and Magic Envelopes. Note that the format
-# specifiers have mapping keys. Used in comment_to_salmon().
+# Template for Atom Salmon. Note that the format specifiers have mapping keys.
+# Used in comment_to_salmon().
 ATOM_SALMON_TEMPLATE = """\
 <?xml version='1.0' encoding='UTF-8'?>
 <entry xmlns='http://www.w3.org/2005/Atom'>

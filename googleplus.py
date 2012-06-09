@@ -1,0 +1,42 @@
+#!/usr/bin/python
+"""Google+ source class.
+"""
+
+__author__ = ['Ryan Barrett <salmon@ryanb.org>']
+
+import source
+
+
+class GooglePlus(source.Source):
+  """Implements the Salmon API for Google+.
+  """
+
+  DOMAIN = 'plus.google.com'
+  FRONT_PAGE_TEMPLATE = 'templates/googleplus_index.html'
+
+  def activity_to_salmon_vars(self, activity):
+    """Extracts Salmon template vars from a JSON activity.
+
+    Args:
+      activity: JSON dict
+
+    Returns: dict of template vars for ATOM_SALMON_TEMPLATE
+    """
+    actor = activity.get('actor', {})
+    content = activity.get('object', {}).get('content')
+    title = activity.get('title')
+    vars = {
+      'id_tag': self.tag_uri(activity.get('id')),
+      'author_name': actor.get('displayName'),
+      'author_uri': 'acct:%s@plus.google.com' % actor.get('id'),
+      # TODO: this should be the original domain link
+      'content': content,
+      'title': title if title else content,
+      'updated': activity.get('published'),
+      }
+
+    in_reply_to = activity.get('inReplyTo')
+    if in_reply_to:
+      vars['in_reply_to_tag'] = self.tag_uri(in_reply_to[0].get('id'))
+
+    return vars

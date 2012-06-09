@@ -4,15 +4,7 @@
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
-try:
-  import json
-except ImportError:
-  import simplejson as json
-import mox
-
-import appengine_config
 import facebook
-import source
 from webutil import testutil
 
 # test data
@@ -37,6 +29,7 @@ SALMON_VARS = {
   'title': 'moire patterns: the new look for spring.',
   'updated': '2012-05-21T02:25:25+0000',
   }
+
 
 class FacebookTest(testutil.HandlerTest):
 

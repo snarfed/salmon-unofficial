@@ -4,13 +4,7 @@
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
-try:
-  import json
-except ImportError:
-  import simplejson as json
-
 import twitter
-import source
 from webutil import testutil
 
 # test data

@@ -4,40 +4,7 @@
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
-try:
-  import json
-except ImportError:
-  import simplejson as json
-
-import appengine_config
 import source
-from webutil import util
-from django_salmon import magicsigs
-from django_salmon import utils
-
-
-# temporary URL for fetching magic sig private keys from webfinger-unofficial
-USER_KEY_HANDLER = \
-    'https://twitter-webfinger.appspot.com/user_key?uri=%s&secret=%s'
-
-# Templates for Atom Salmons and Magic Envelopes. Note that the format
-# specifiers have mapping keys. Used in tweet_to_salmon().
-ATOM_SALMON_TEMPLATE = """\
-<?xml version='1.0' encoding='UTF-8'?>
-<entry xmlns='http://www.w3.org/2005/Atom'>
-  <id>%(id_tag)s</id>
-  <author>
-    <name>%(author_name)s</name>
-    <uri>%(author_uri)s</uri>
-  </author>
-  <thr:in-reply-to xmlns:thr='http://purl.org/syndication/thread/1.0'
-    ref='%(in_reply_to_tag)s'>
-    %(in_reply_to_tag)s
-  </thr:in-reply-to>
-  <content>%(content)s</content>
-  <title>%(title)s</title>
-  <updated>%(updated)s</updated>
-</entry>"""
 
 
 class Twitter(source.Source):
