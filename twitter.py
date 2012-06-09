@@ -56,17 +56,12 @@ class Twitter(source.Source):
 
     Returns: dict of template vars
     """
-    id = tweet.get('id', '')
-    parent_id, _, cmt_id = id.partition('_')
-    if not parent_id or not cmt_id:
-      raise ValueError('Could not parse tweet id: %s' % id)
-
-    cmt_from = tweet.get('from', {})
-
     vars = {
-      'id_tag': self.tag_uri(id),
+      'id_tag': self.tag_uri(str(tweet.get('id'))),
       'author_name': tweet.get('from_user_name'),
-      'author_uri': 'acct:%s@twitter-webfinger.appspot.com' % cmt_from.get('id'),
+      'author_uri': 'acct:%s@twitter-webfinger.appspot.com' % tweet.get('from_user'),
+      # TODO: this should be the original domain link
+      'in_reply_to_tag': self.tag_uri(tweet.get('in_reply_to_status_id')),
       'content': tweet.get('text'),
       'title': tweet.get('text'),
       # TODO: use rfc2822_to_iso8601() from activitystreams-unofficial/twitter.py
