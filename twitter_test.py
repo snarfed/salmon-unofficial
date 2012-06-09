@@ -26,12 +26,12 @@ TWEET_JSON = {
   'text': 'moire patterns: the new look for spring.',
   'in_reply_to_status_id': 456,
   }
-SALMON_VARS ={
+SALMON_VARS = {
   'id_tag': 'tag:twitter.com,2012:123',
   'author_name': 'Ryan Barrett',
   'author_uri': 'acct:snarfed@twitter-webfinger.appspot.com',
-  'in_reply_to_tag': 'tag:twitter.com,2012:456',
   # TODO: this should be the original domain link
+  'in_reply_to_tag': 'tag:twitter.com,2012:456',
   'content': 'moire patterns: the new look for spring.',
   'title': 'moire patterns: the new look for spring.',
   'updated': 'Mon, 21 May 2012 02:25:25 +0000',

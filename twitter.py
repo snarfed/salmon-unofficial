@@ -54,7 +54,7 @@ class Twitter(source.Source):
     Args:
       tweet: JSON dict
 
-    Returns: dict of template vars
+    Returns: dict of template vars for ATOM_SALMON_TEMPLATE
     """
     vars = {
       'id_tag': self.tag_uri(str(tweet.get('id'))),
