@@ -38,7 +38,7 @@ mailing list</a>.</p>
 
 <p>This site currently sends Salmon slaps to these domains. Add your own!</p>
 
-<form id="domains" method="post">
+<form id="domains" method="post" action="/add_domain">
 <!-- <label for="domain">Domain: </label> -->
 <input id="domain" name="domain" type="text" size="16" />
 <input type="submit" value="Add" />
@@ -46,7 +46,7 @@ mailing list</a>.</p>
 
 <ul>
 {% for domain in domains %}
-<li><a href="http://{% domain.key.name %}/">domain.key.name</a></li>
+<li><a href="http://{{ domain.key.name }}/">{{ domain.key.name }}</a></li>
 {% endfor %}
 </ul>
 

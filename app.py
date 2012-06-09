@@ -34,7 +34,7 @@ class FrontPageHandler(handlers.TemplateHandler):
     return 'templates/index.html'
 
   def template_vars(self):
-    return {}
+    return {'domains': Domain.all()}
 
 
 class AddDomainHandler(handlers.TemplateHandler):
