@@ -27,7 +27,7 @@ class GooglePlus(source.Source):
     vars = {
       'id_tag': self.tag_uri(activity.get('id')),
       'author_name': actor.get('displayName'),
-      'author_uri': 'acct:%s@plus.google.com' % actor.get('id'),
+      'author_uri': 'acct:%s@gmail.com' % actor.get('id'),
       # TODO: this should be the original domain link
       'content': content,
       'title': title if title else content,

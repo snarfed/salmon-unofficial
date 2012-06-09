@@ -28,7 +28,7 @@ ACTIVITY_JSON = {
 ACTIVITY_SALMON_VARS = {
   'id_tag': 'tag:plus.google.com,2012:123',
   'author_name': 'Ryan Barrett',
-  'author_uri': 'acct:103651231634018158746@plus.google.com',
+  'author_uri': 'acct:103651231634018158746@gmail.com',
   'content': 'moire patterns: the new look for spring.',
   'title': 'moire patterns!',
   'updated': '2012-06-07T05:32:31.000Z',
@@ -52,7 +52,7 @@ COMMENT_JSON = {
 COMMENT_SALMON_VARS = {
   'id_tag': 'tag:plus.google.com,2012:ccg0o1_OvkYgU_fVvw5-gO2rdf3',
   'author_name': 'fred',
-  'author_uri': 'acct:222@plus.google.com',
+  'author_uri': 'acct:222@gmail.com',
   # TODO: this should be the original domain link
   'in_reply_to_tag': 'tag:plus.google.com,2012:123',
   'content': 'i agree',
