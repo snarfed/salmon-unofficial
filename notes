@@ -66,6 +66,10 @@ https://developers.facebook.com/tools/explorer?method=GET&path=search%3Fq%3Dsnar
 
 https://developers.facebook.com/tools/explorer?method=GET&path=search%3Fq%3Dsnarfed.org
 
+google+ is same as facebook. it has search but it only searches post content,
+not attached links. :/
+https://developers.google.com/+/api/latest/activities/search
+
 
 ===
 testbed

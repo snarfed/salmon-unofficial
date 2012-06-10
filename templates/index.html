@@ -43,12 +43,18 @@ mailing list</a>.</p>
 <input id="domain" name="domain" type="text" size="16" />
 <input type="submit" value="Add" />
 </form>
+<br />
 
-<ul>
+<table id="destinations">
 {% for domain in domains %}
-<li><a href="http://{{ domain.key.name }}/">{{ domain.key.name }}</a></li>
+<tr><td>
+  <a href="{{ domain.key.name }}">
+    <img class="dest" src="http://{{ domain.key.name }}/favicon.ico" /></a>
+</td><td>
+  <a href="{{ domain.key.name }}">{{ domain.key.name }}</a>
+</td></tr>
 {% endfor %}
-</ul>
+</table>
 
 <p><a href="http://snarfed.org/about">Contact Ryan</a> if you want a domain
 removed.</p>

@@ -10,6 +10,8 @@ __author__ = 'Ryan Barrett <salmon@ryanb.org>'
 import re
 import urlparse
 
+from models import Domain
+
 import salmon
 import appengine_config
 from webob import exc
@@ -18,13 +20,6 @@ from webutil import webapp2
 
 from google.appengine.ext import db
 from google.appengine.ext.webapp.util import run_wsgi_app
-
-
-class Domain(db.Model):
-  """A domain that we should send Salmon slaps to.
-
-  The key name is the domain"""
-  pass
 
 
 class FrontPageHandler(handlers.TemplateHandler):

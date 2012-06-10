@@ -14,8 +14,10 @@ select, input[type=text] {
   border: 1px solid gray;
 }
 
-iframe {
-  width: 100%;
-  min-height: 40em;
-  border: 1px solid gray;
+#sources, #destinations {
+  border-spacing: .2em .2em;
+}
+
+#sources *, #destinations * {
+  vertical-align: middle;
 }

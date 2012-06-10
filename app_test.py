@@ -15,8 +15,6 @@ class AppTest(testutil.HandlerTest):
 
   def setUp(self):
     super(AppTest, self).setUp()
-    self.testbed.init_datastore_v3_stub(
-      consistency_policy=datastore_stub_util.MasterSlaveConsistencyPolicy())
     self.datastore_stub = self.testbed.get_stub('datastore_v3')
 
   def test_add_good_domain(self):
