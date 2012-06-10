@@ -31,20 +31,6 @@ class FakeSite(FakeBase, Site):
   pass
 
 
-# class FakeDestination(FakeBase, Destination):
-#   """  Attributes:
-#     comments: dict mapping FakeDestination string key to list of Comment entities
-#   """
-
-#   comments = collections.defaultdict(list)
-
-#   def add_comment(self, comment):
-#     FakeDestination.comments[str(self.key())].append(comment)
-
-#   def get_comments(self):
-#     return FakeDestination.comments[str(self.key())]
-
-
 class FakeSource(FakeBase, Source):
   """Attributes:
     comments: dict mapping FakeSource string key to list of Comments to be

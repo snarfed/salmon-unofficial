@@ -76,11 +76,10 @@ class User(util.KeyNameModel, util.SingleEGModel):
 class Site(util.KeyNameModel, util.SingleEGModel):
   """A web site for a single entity, e.g. a Facebook or Twitter profile.
 
-  Not intended to be used directly. Inherit from one or both of the Destination
-  and Source subclasses.
+  Not intended to be used directly. Inherit from Source instead.
   """
 
-  # human-readable name for this destination type. subclasses should override.
+  # human-readable name for this site type. subclasses should override.
   TYPE_NAME = None
 
   url = db.LinkProperty()
@@ -165,23 +164,3 @@ class Source(Site):
                   params={'source_key': str(self.key()),
                           'last_polled': last_polled_str},
                   **kwargs)
-
-
-
-# class Destination(Site):
-#   """A web site to propagate comments to, e.g. a WordPress blog.
-
-#   Each concrete destination class should subclass this class.
-#   """
-
-#   last_updated = db.DateTimeProperty()
-
-#   def add_comment(self, comment):
-#     """Posts the given comment to this site.
-
-#     To be implemented by subclasses.
-
-#     Args:
-#       comment: Comment
-#     """
-#     raise NotImplementedError()

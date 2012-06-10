@@ -5,7 +5,7 @@
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
 from models import Domain, User
-from fakes import FakeSite, FakeSource#, FakeDestination
+from fakes import FakeSite, FakeSource
 import util
 from webutil import testutil
 
