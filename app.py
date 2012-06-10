@@ -32,7 +32,7 @@ class FrontPageHandler(handlers.TemplateHandler):
     return {'domains': Domain.all()}
 
 
-class AddDomainHandler(handlers.TemplateHandler):
+class AddDomainHandler(webapp2.RequestHandler):
   """Handles POSTs to /add_domain.  """
 
   def post(self):

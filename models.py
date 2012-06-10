@@ -56,7 +56,6 @@ class User(util.KeyNameModel, util.SingleEGModel):
       user = cls.get_by_key_name(key_name)
       if not user:
         user = cls(key_name=key_name)
-        print `user`
         user.save()
 
       return user
@@ -105,14 +104,13 @@ class Site(util.KeyNameModel, util.SingleEGModel):
 
   @classmethod
   @db.transactional
-  def create_new(cls, handler, **kwargs):
+  def create_new(cls, **kwargs):
     """Creates and saves a new Site.
 
     Args:
-      handler: the current webapp.RequestHandler
       **kwargs: passed to new()
     """
-    new = cls.new(handler, **kwargs)
+    new = cls.new(**kwargs)
     new.save()
     return new
 
@@ -146,14 +144,13 @@ class Source(Site):
     raise NotImplementedError()
 
   @classmethod
-  def create_new(cls, handler, **kwargs):
+  def create_new(cls, **kwargs):
     """Creates and saves a new Source and adds a poll task for it.
 
     Args:
-      handler: the current webapp.RequestHandler
       **kwargs: passed to new()
     """
-    new = super(Source, cls).create_new(handler, **kwargs)
+    new = super(Source, cls).create_new(**kwargs)
     new.add_poll_task()
     return new
 

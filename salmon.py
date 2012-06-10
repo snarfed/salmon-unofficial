@@ -80,11 +80,11 @@ class Salmon(util.KeyNameModel):
     Returns: JSON dict following Magic Signatures spec section 3.5:
     http://salmon-protocol.googlecode.com/svn/trunk/draft-panzer-magicsig-01.html#anchor5
     """
-    class Key(object):
+    class UserKey(object):
       def __init__(self, **kwargs):
         vars(self).update(**kwargs)
 
     key_url = USER_KEY_HANDLER % (author_uri, appengine_config.USER_KEY_HANDLER_SECRET)
-    key = Key(**json.loads(util.urlfetch(key_url)))
+    key = UserKey(**json.loads(util.urlfetch(key_url)))
     return magicsigs.magic_envelope(ATOM_SALMON_TEMPLATE % json.loads(self.vars),
                                     'application/atom+xml', key)

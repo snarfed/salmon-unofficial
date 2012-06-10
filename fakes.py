@@ -16,7 +16,7 @@ class FakeBase(db.Model):
   key_name_counter = 1
 
   @classmethod
-  def new(cls, handler, **props):
+  def new(cls, **props):
     if 'url' not in props:
       props['url'] = 'http://fake/url'
     inst = cls(key_name=str(cls.key_name_counter), **props)
@@ -32,18 +32,17 @@ class FakeSite(FakeBase, Site):
 
 
 class FakeSource(FakeBase, Source):
-  """Attributes:
-    comments: dict mapping FakeSource string key to list of Comments to be
-      returned by poll()
+  """A fake Source class.
+
+  Class attributes:
+    salmon: dict mapping FakeSource string key to list of Salmon to be
+      returned by poll(). Can't just store in an instance attribute because
+      tasks.py code loads entities from the datastore.
   """
-  comments = {}
+  salmon = {}
 
-  def set_comments(self, comments):
-    FakeSource.comments[str(self.key())] = comments
+  def set_salmon(self, salmon):
+    FakeSource.salmon[str(self.key())] = salmon
 
-  def get_posts(self):
-    return [(c, c.dest_post_url) for c in FakeSource.comments[str(self.key())]]
-
-  def get_comments(self, posts):
-    assert posts
-    return FakeSource.comments[str(self.key())]
+  def get_salmon(self):
+    return FakeSource.salmon[str(self.key())]
