@@ -11,26 +11,20 @@ except ImportError:
 import mox
 
 import appengine_config
-import salmon
+from salmon import Salmon
 from webutil import testutil
 
 
-ATOM_SALMON = """\
-<?xml version='1.0' encoding='UTF-8'?>
-<entry xmlns='http://www.w3.org/2005/Atom'>
-  <id>tag:facebook.com,2012:10102828452385634_39170557</id>
-  <author>
-    <name>Ryan Barrett</name>
-    <uri>acct:212038@facebook-webfinger.appspot.com</uri>
-  </author>
-  <thr:in-reply-to xmlns:thr='http://purl.org/syndication/thread/1.0'
-    ref='tag:facebook.com,2012:10102828452385634'>
-    tag:facebook.com,2012:10102828452385634
-  </thr:in-reply-to>
-  <content>moire patterns: the new look for spring.</content>
-  <title>moire patterns: the new look for spring.</title>
-  <updated>2012-05-21T02:25:25+0000</updated>
-</entry>"""
+SALMON_VARS = {
+  'id_tag': 'tag:facebook.com,2012:10102828452385634_39170557',
+  'author_name': 'Ryan Barrett',
+  'author_uri': 'acct:212038@facebook-webfinger.appspot.com',
+  # TODO: this should be the original domain link
+  'in_reply_to_tag': 'tag:facebook.com,2012:10102828452385634',
+  'content': 'moire patterns: the new look for spring.',
+  'title': 'moire patterns: the new look for spring.',
+  'updated': '2012-05-21T02:25:25+0000',
+  }
 
 USER_KEY_JSON = {
   'public_exponent': 'AQAB',
@@ -39,7 +33,7 @@ USER_KEY_JSON = {
 }
 
 ENVELOPE_JSON = {
-  # this is base64.urlsafe_b64encode(ATOM_SALMON)
+  # this is base64.urlsafe_b64encode(ATOM_SALMON_TEMPLATE % SALMON_VARS)
   'data':    'PD94bWwgdmVyc2lvbj0nMS4wJyBlbmNvZGluZz0nVVRGLTgnPz4KPGVudHJ5IHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDA1L0F0b20nPgogIDxpZD50YWc6ZmFjZWJvb2suY29tLDIwMTI6MTAxMDI4Mjg0NTIzODU2MzRfMzkxNzA1NTc8L2lkPgogIDxhdXRob3I-CiAgICA8bmFtZT5SeWFuIEJhcnJldHQ8L25hbWU-CiAgICA8dXJpPmFjY3Q6MjEyMDM4QGZhY2Vib29rLXdlYmZpbmdlci5hcHBzcG90LmNvbTwvdXJpPgogIDwvYXV0aG9yPgogIDx0aHI6aW4tcmVwbHktdG8geG1sbnM6dGhyPSdodHRwOi8vcHVybC5vcmcvc3luZGljYXRpb24vdGhyZWFkLzEuMCcKICAgIHJlZj0ndGFnOmZhY2Vib29rLmNvbSwyMDEyOjEwMTAyODI4NDUyMzg1NjM0Jz4KICAgIHRhZzpmYWNlYm9vay5jb20sMjAxMjoxMDEwMjgyODQ1MjM4NTYzNAogIDwvdGhyOmluLXJlcGx5LXRvPgogIDxjb250ZW50Pm1vaXJlIHBhdHRlcm5zOiB0aGUgbmV3IGxvb2sgZm9yIHNwcmluZy48L2NvbnRlbnQ-CiAgPHRpdGxlPm1vaXJlIHBhdHRlcm5zOiB0aGUgbmV3IGxvb2sgZm9yIHNwcmluZy48L3RpdGxlPgogIDx1cGRhdGVkPjIwMTItMDUtMjFUMDI6MjU6MjUrMDAwMDwvdXBkYXRlZD4KPC9lbnRyeT4',
   'data_type': 'application/atom+xml',
   'encoding': 'base64url',
@@ -51,7 +45,7 @@ ENVELOPE_JSON = {
   # ./sign.sh input.txt key.pem
   #
   # here, it's these components, in order, joined with period (.) separators:
-  # >>> base64.urlsafe_b64encode(ATOM_SALMON)
+  # >>> base64.urlsafe_b64encode(ATOM_SALMON_TEMPLATE % SALMON_VARS)
   # ...
   # >>> base64.urlsafe_b64encode('application/atom+xml').rstrip('=')
   # 'YXBwbGljYXRpb24vYXRvbSt4bWw'
@@ -91,8 +85,27 @@ class SalmonTest(testutil.HandlerTest):
 
   def setUp(self):
     super(SalmonTest, self).setUp()
-    self.salmon = salmon.Salmon(self.handler)
+    self.salmon = Salmon(key_name='tag:xyz', vars=json.dumps(SALMON_VARS))
     appengine_config.USER_KEY_HANDLER_SECRET = 'my_secret'
+
+  def test_get_or_save(self):
+    self.assertEqual(0, Salmon.all().count())
+    self.assertEqual(0, len(self.taskqueue_stub.GetTasks('propagate')))
+
+    # new. should add a propagate task.
+    saved = self.salmon.get_or_save()
+    self.assertTrue(saved.is_saved())
+    self.assertEqual(self.salmon.key(), saved.key())
+
+    tasks = self.taskqueue_stub.GetTasks('propagate')
+    self.assertEqual(1, len(tasks))
+    self.assertEqual(str(self.salmon.key()),
+                     testutil.get_task_params(tasks[0])['salmon_key'])
+    self.assertEqual('/_ah/queue/propagate', tasks[0]['url'])
+
+    # existing. no new task.
+    same = saved.get_or_save()
+    self.assertEqual(1, len(tasks))
 
   def test_envelope(self):
     self.expect_urlfetch('https://facebook-webfinger.appspot.com/user_key'
@@ -100,6 +113,7 @@ class SalmonTest(testutil.HandlerTest):
                          json.dumps(USER_KEY_JSON))
     self.mox.ReplayAll()
 
-    envelope = self.salmon.envelope(ATOM_SALMON, 'acct:ryan@facebook.com')\
+    envelope = self.salmon.envelope('acct:ryan@facebook.com')\
         .replace('>', '>\n').replace('</', '\n</')
     self.assert_multiline_equals(ENVELOPE_XML, envelope)
+

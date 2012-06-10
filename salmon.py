@@ -5,6 +5,7 @@
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
 import datetime
+import logging
 try:
   import json
 except ImportError:
@@ -15,6 +16,7 @@ from webutil import util
 from django_salmon import magicsigs
 from django_salmon import utils
 
+from google.appengine.api import taskqueue
 from google.appengine.ext import db
 
 
@@ -23,7 +25,6 @@ USER_KEY_HANDLER = \
     'https://facebook-webfinger.appspot.com/user_key?uri=%s&secret=%s'
 
 # Template for Atom Salmon. Note that the format specifiers have mapping keys.
-# Used in comment_to_salmon().
 ATOM_SALMON_TEMPLATE = """\
 <?xml version='1.0' encoding='UTF-8'?>
 <entry xmlns='http://www.w3.org/2005/Atom'>
@@ -45,19 +46,28 @@ ATOM_SALMON_TEMPLATE = """\
 class Salmon(util.KeyNameModel):
   """A salmon to be propagated.
 
-  Class constants:
-    DOMAIN: string, the source's domain
+  Key name is the id tag URI.
   """
 
-  def __init__(self, handler):
-    self.handler = handler
+  STATUSES = ('new', 'processing', 'complete')
 
-  def get_comments(self):
-    """
-    """
-    raise NotImplementedError()
+  status = db.StringProperty(choices=STATUSES, default='new')
+  leased_until = db.DateTimeProperty()
+  vars = db.StringProperty()
 
-  def envelope(self, salmon, author_uri):
+  @db.transactional
+  def get_or_save(self):
+    existing = db.get(self.key())
+    if existing:
+      logging.debug('Deferring to existing salmon %s.', existing.key().name())
+      return existing
+
+    logging.debug('New salmon to propagate: %s' % self.key().name())
+    taskqueue.add(queue_name='propagate', params={'salmon_key': str(self.key())})
+    self.save()
+    return self
+
+  def envelope(self, author_uri):
     """Signs and encloses an Atom Salmon in a Magic Signature envelope.
 
     Fetches the author's Magic Signatures public key via LRDD in order to create
@@ -70,46 +80,11 @@ class Salmon(util.KeyNameModel):
     Returns: JSON dict following Magic Signatures spec section 3.5:
     http://salmon-protocol.googlecode.com/svn/trunk/draft-panzer-magicsig-01.html#anchor5
     """
-    class Struct(object):
+    class Key(object):
       def __init__(self, **kwargs):
         vars(self).update(**kwargs)
 
     key_url = USER_KEY_HANDLER % (author_uri, appengine_config.USER_KEY_HANDLER_SECRET)
-    key = Struct(**json.loads(util.urlfetch(key_url)))
-    return magicsigs.magic_envelope(salmon, 'application/atom+xml', key)
-
-
-
-  # STATUSES = ('new', 'processing', 'complete')
-
-  # source = db.ReferenceProperty(reference_class=Source, required=True)
-  # dest = db.ReferenceProperty(reference_class=Destination, required=True)
-  # source_post_url = db.LinkProperty()
-  # source_comment_url = db.LinkProperty()
-  # dest_post_url = db.LinkProperty()
-  # dest_comment_url = db.LinkProperty()
-  # created = db.DateTimeProperty()
-  # author_name = db.StringProperty()
-  # author_url = db.LinkProperty()
-  # content = db.TextProperty()
-
-  # status = db.StringProperty(choices=STATUSES, default='new')
-  # leased_until = db.DateTimeProperty()
-
-  # @db.transactional
-  # def get_or_save(self):
-  #   existing = db.get(self.key())
-  #   if existing:
-  #     logging.debug('Deferring to existing comment %s.', existing.key().name())
-  #     # this might be a nice sanity check, but we'd need to hard code certain
-  #     # properties (e.g. content) so others (e.g. status) aren't checked.
-  #     # for prop in self.properties().values():
-  #     #   new = prop.get_value_for_datastore(self)
-  #     #   existing = prop.get_value_for_datastore(existing)
-  #     #   assert new == existing, '%s: new %s, existing %s' % (prop, new, existing)
-  #     return existing
-
-  #   logging.debug('New comment to propagate: %s' % self.key().name())
-  #   taskqueue.add(queue_name='propagate', params={'comment_key': str(self.key())})
-  #   self.save()
-  #   return self
+    key = Key(**json.loads(util.urlfetch(key_url)))
+    return magicsigs.magic_envelope(ATOM_SALMON_TEMPLATE % json.loads(self.vars),
+                                    'application/atom+xml', key)
