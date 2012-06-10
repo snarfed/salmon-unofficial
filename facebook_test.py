@@ -35,7 +35,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def setUp(self):
     super(FacebookTest, self).setUp()
-    self.facebook = facebook.Facebook(self.handler)
+    self.facebook = facebook.Facebook(key_name='x')
 
   def test_comment_to_salmon_vars(self):
     self.assert_equals(

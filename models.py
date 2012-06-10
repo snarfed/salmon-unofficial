@@ -119,7 +119,7 @@ class Site(util.KeyNameModel, util.SingleEGModel):
 
 
 class Source(Site):
-  """A web site to read comments from, e.g. a Facebook profile.
+  """A web site to read posts from, e.g. a Facebook profile.
 
   Each concrete source should subclass this.
   """
@@ -139,22 +139,10 @@ class Source(Site):
   def get_posts(self):
     """Returns a list of the most recent posts from this source.
  
-    To be implemented by subclasses. The returned post objects will be passed
-    back in get_comments().
+    To be implemented by subclasses.
 
     Returns: list of (post, url), where post is any object and url is the string
       url for the post
-    """
-    raise NotImplementedError()
-
-  def get_comments(self, posts_and_dests):
-    """Returns a list of Comment instances for the given posts.
-
-    To be implemented by subclasses. Only called after get_posts().
-
-    Args:
-      posts_and_dests: list of (post object, Destination) tuples. The post
-        objects are a subset of the ones returned by get_posts().
     """
     raise NotImplementedError()
 
@@ -197,41 +185,3 @@ class Source(Site):
 #       comment: Comment
 #     """
 #     raise NotImplementedError()
-
-
-# class Comment(util.KeyNameModel):
-#   """A comment to be propagated.
-#   """
-#   STATUSES = ('new', 'processing', 'complete')
-
-#   source = db.ReferenceProperty(reference_class=Source, required=True)
-#   dest = db.ReferenceProperty(reference_class=Destination, required=True)
-#   source_post_url = db.LinkProperty()
-#   source_comment_url = db.LinkProperty()
-#   dest_post_url = db.LinkProperty()
-#   dest_comment_url = db.LinkProperty()
-#   created = db.DateTimeProperty()
-#   author_name = db.StringProperty()
-#   author_url = db.LinkProperty()
-#   content = db.TextProperty()
-
-#   status = db.StringProperty(choices=STATUSES, default='new')
-#   leased_until = db.DateTimeProperty()
-
-#   @db.transactional
-#   def get_or_save(self):
-#     existing = db.get(self.key())
-#     if existing:
-#       logging.debug('Deferring to existing comment %s.', existing.key().name())
-#       # this might be a nice sanity check, but we'd need to hard code certain
-#       # properties (e.g. content) so others (e.g. status) aren't checked.
-#       # for prop in self.properties().values():
-#       #   new = prop.get_value_for_datastore(self)
-#       #   existing = prop.get_value_for_datastore(existing)
-#       #   assert new == existing, '%s: new %s, existing %s' % (prop, new, existing)
-#       return existing
-
-#     logging.debug('New comment to propagate: %s' % self.key().name())
-#     taskqueue.add(queue_name='propagate', params={'comment_key': str(self.key())})
-#     self.save()
-#     return self

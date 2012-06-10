@@ -35,7 +35,7 @@ class TwitterTest(testutil.HandlerTest):
 
   def setUp(self):
     super(TwitterTest, self).setUp()
-    self.twitter = twitter.Twitter(self.handler)
+    self.twitter = twitter.Twitter(key_name='x')
 
   def test_tweet_to_salmon(self):
     self.assert_equals(SALMON_VARS, self.twitter.tweet_to_salmon_vars(TWEET_JSON))

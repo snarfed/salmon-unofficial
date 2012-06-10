@@ -4,10 +4,12 @@
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
-import source
+from models import Source
+
+from webutil import util
 
 
-class Facebook(source.Source):
+class Facebook(Source):
   """Implements the Salmon API for Facebook.
   """
 
@@ -33,11 +35,11 @@ class Facebook(source.Source):
     cmt_from = comment.get('from', {})
 
     return {
-      'id_tag': self.tag_uri(id),
+      'id_tag': util.tag_uri(self.DOMAIN, id),
       'author_name': cmt_from.get('name'),
       'author_uri': 'acct:%s@facebook-webfinger.appspot.com' % cmt_from.get('id'),
       # TODO: this should be the original domain link
-      'in_reply_to_tag': self.tag_uri(parent_id),
+      'in_reply_to_tag': util.tag_uri(self.DOMAIN, parent_id),
       'content': comment.get('message'),
       'title': comment.get('message'),
       'updated': comment.get('created_time'),

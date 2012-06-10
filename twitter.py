@@ -4,10 +4,12 @@
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
-import source
+from models import Source
+
+from webutil import util
 
 
-class Twitter(source.Source):
+class Twitter(Source):
   """Implements the Salmon API for Twitter.
   """
 
@@ -22,11 +24,11 @@ class Twitter(source.Source):
     Returns: dict of template vars for ATOM_SALMON_TEMPLATE
     """
     vars = {
-      'id_tag': self.tag_uri(str(tweet.get('id'))),
+      'id_tag': util.tag_uri(self.DOMAIN, str(tweet.get('id'))),
       'author_name': tweet.get('from_user_name'),
       'author_uri': 'acct:%s@twitter-webfinger.appspot.com' % tweet.get('from_user'),
       # TODO: this should be the original domain link
-      'in_reply_to_tag': self.tag_uri(tweet.get('in_reply_to_status_id')),
+      'in_reply_to_tag': util.tag_uri(self.DOMAIN, tweet.get('in_reply_to_status_id')),
       'content': tweet.get('text'),
       'title': tweet.get('text'),
       # TODO: use rfc2822_to_iso8601() from activitystreams-unofficial/twitter.py
@@ -36,6 +38,6 @@ class Twitter(source.Source):
     parent_id = tweet.get('in_reply_to_status_id')
     if parent_id:
       # TODO: this should be the original domain link
-      vars['in_reply_to_tag'] = self.tag_uri(parent_id)
+      vars['in_reply_to_tag'] = util.tag_uri(self.DOMAIN, parent_id)
 
     return vars

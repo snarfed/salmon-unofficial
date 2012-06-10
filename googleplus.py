@@ -4,10 +4,12 @@
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
-import source
+from models import Source
+
+from webutil import util
 
 
-class GooglePlus(source.Source):
+class GooglePlus(Source):
   """Implements the Salmon API for Google+.
   """
 
@@ -25,7 +27,7 @@ class GooglePlus(source.Source):
     content = activity.get('object', {}).get('content')
     title = activity.get('title')
     vars = {
-      'id_tag': self.tag_uri(activity.get('id')),
+      'id_tag': util.tag_uri(self.DOMAIN, activity.get('id')),
       'author_name': actor.get('displayName'),
       'author_uri': 'acct:%s@gmail.com' % actor.get('id'),
       # TODO: this should be the original domain link
@@ -36,6 +38,6 @@ class GooglePlus(source.Source):
 
     in_reply_to = activity.get('inReplyTo')
     if in_reply_to:
-      vars['in_reply_to_tag'] = self.tag_uri(in_reply_to[0].get('id'))
+      vars['in_reply_to_tag'] = util.tag_uri(self.DOMAIN, in_reply_to[0].get('id'))
 
     return vars

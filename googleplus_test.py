@@ -65,7 +65,7 @@ class GooglePlusTest(testutil.HandlerTest):
 
   def setUp(self):
     super(GooglePlusTest, self).setUp()
-    self.googleplus = googleplus.GooglePlus(self.handler)
+    self.googleplus = googleplus.GooglePlus(key_name='x')
 
   def test_activity_to_salmon_vars(self):
     self.assert_equals(ACTIVITY_SALMON_VARS,
