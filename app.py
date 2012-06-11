@@ -7,6 +7,7 @@ host-meta.xrds (XRDS-Simple), and host-meta.jrd (JRD ie JSON).
 
 __author__ = 'Ryan Barrett <salmon@ryanb.org>'
 
+import itertools
 import re
 import urlparse
 
@@ -28,9 +29,9 @@ class FrontPage(handlers.TemplateHandler):
     return 'templates/index.html'
 
   def template_vars(self):
-    sources = (facebook.Facebook.all().run() +
-               googleplus.GooglePlus.all().run() +
-               twitter.TwitterSearch.all().run())
+    sources = itertools.chain(facebook.Facebook.all().run(),
+                              googleplus.GooglePlus.all().run(),
+                              twitter.TwitterSearch.all().run())
     return {'sources': sources}
 
 
