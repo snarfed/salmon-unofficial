@@ -4,12 +4,13 @@
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
+import json
 import logging
 import urllib
 import urlparse
 
 import appengine_config
-from models import Source
+import models
 
 from webutil import util
 from webutil import webapp2
@@ -45,8 +46,10 @@ GET_ACCESS_TOKEN_URL = '&'.join((
     'code=%(auth_code)s',
     ))
 
+API_USER_URL = 'https://graph.facebook.com/%(id)s?access_token=%(access_token)s'
 
-class Facebook(Source):
+
+class Facebook(models.Source):
   """Implements the Salmon API for Facebook.
   """
 
@@ -71,16 +74,18 @@ class Facebook(Source):
       handler: the current webapp2.RequestHandler
     """
     access_token = handler.request.get('access_token')
-    results = FacebookApp.get().fql(
-      'SELECT id, name, url, pic_small, type, username FROM profile WHERE id = me()',
-      access_token)
-    result = results[0]
-    id = str(result['id'])
-    return FacebookPage(key_name=id,
-                        owner=models.User.get_current_user(),
-                        access_token=access_token,
-                        picture=result['pic_small'],
-                        **result)
+    resp = util.urlfetch(API_USER_URL % {'id': 'me', 'access_token': access_token})
+    me = json.loads(resp)
+
+    id = me['id']
+    handle = me.get('username') or id
+    return Facebook(
+      key_name=id,
+      owner=models.User.get_current_user(),
+      access_token=access_token,
+      name=me.get('name'),
+      picture='https://graph.facebook.com/%s/picture?type=small' % handle,
+      url='http://facebook.com/%s' % handle)
 
   def comment_to_salmon_vars(self, comment):
     """Extracts Salmon template vars from a JSON Facebook comment.

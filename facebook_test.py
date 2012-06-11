@@ -1,7 +1,6 @@
 #!/usr/bin/python
 """Unit tests for facebook.py.
 """
-STATE: manually test adding facebook
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 

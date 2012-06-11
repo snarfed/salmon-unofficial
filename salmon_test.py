@@ -4,10 +4,7 @@
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
-try:
-  import json
-except ImportError:
-  import simplejson as json
+import json
 import mox
 
 import appengine_config
