@@ -51,7 +51,7 @@ class PollTest(TaskQueueTest):
 
   def setUp(self):
     super(PollTest, self).setUp()
-    self.source = FakeSource.new()
+    self.source = FakeSource.new(self.handler)
     self.source.save()
     self.source.set_salmon([self.salmon])
     self.task_params = {'source_key': self.source.key(),

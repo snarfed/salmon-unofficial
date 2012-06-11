@@ -14,6 +14,8 @@ import models
 from webutil import util
 from webutil import webapp2
 
+from google.appengine.ext.webapp.util import run_wsgi_app
+
 
 class TwitterSearch(models.Source):
   """A Twitter search for posts that link to a given domain.

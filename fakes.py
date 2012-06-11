@@ -4,7 +4,7 @@
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
-from models import Site, Source
+import models
 
 from google.appengine.ext import db
 
@@ -16,7 +16,7 @@ class FakeBase(db.Model):
   key_name_counter = 1
 
   @classmethod
-  def new(cls, **props):
+  def new(cls, handler, **props):
     if 'url' not in props:
       props['url'] = 'http://fake/url'
     inst = cls(key_name=str(cls.key_name_counter), **props)
@@ -27,11 +27,7 @@ class FakeBase(db.Model):
     return self.__class__.__name__
 
 
-class FakeSite(FakeBase, Site):
-  pass
-
-
-class FakeSource(FakeBase, Source):
+class FakeSource(FakeBase, models.Source):
   """A fake Source class.
 
   Class attributes:

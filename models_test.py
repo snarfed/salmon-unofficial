@@ -5,7 +5,7 @@
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
 from models import User
-from fakes import FakeSite, FakeSource
+from fakes import FakeSource
 import util
 from webutil import testutil
 
@@ -30,31 +30,10 @@ class UserTest(testutil.HandlerTest):
     self.assert_entities_equal([User(key_name=self.current_user_id)], User.all())
 
 
-class SiteTest(testutil.HandlerTest):
-
-  def _test_create_new(self):
-    FakeSite.create_new()
-    self.assertEqual(1, FakeSite.all().count())
-    self.assertEqual(0, len(self.taskqueue_stub.GetTasks('poll')))
-
-  def test_create_new(self):
-    self.assertEqual(0, FakeSite.all().count())
-    self._test_create_new()
-    self.assertEqual(1, FakeSite.all().count())
-
-  def test_create_new_already_exists(self):
-    FakeSite.new().save()
-    self.assertEqual(1, FakeSite.all().count())
-
-    FakeSite.key_name_counter -= 1
-    self._test_create_new()
-    self.assertEqual(1, FakeSite.all().count())
-
-
 class SourceTest(testutil.HandlerTest):
 
   def _test_create_new(self):
-    FakeSource.create_new()
+    FakeSource.create_new(self.handler)
     self.assertEqual(1, FakeSource.all().count())
 
     tasks = self.taskqueue_stub.GetTasks('poll')
@@ -71,7 +50,6 @@ class SourceTest(testutil.HandlerTest):
     self._test_create_new()
 
   def test_create_new_already_exists(self):
-    FakeSource.new().save()
+    FakeSource.new(self.handler).save()
     FakeSource.key_name_counter -= 1
     self._test_create_new()
-

@@ -1,9 +1,14 @@
 #!/usr/bin/python
 """Unit tests for facebook.py.
 """
+STATE: manually test adding facebook
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
+import mox
+import urlparse
+
+import appengine_config
 import facebook
 from webutil import testutil
 
@@ -36,6 +41,8 @@ class FacebookTest(testutil.HandlerTest):
   def setUp(self):
     super(FacebookTest, self).setUp()
     self.facebook = facebook.Facebook(key_name='x')
+    appengine_config.FACEBOOK_APP_ID = 'my_app_id'
+    appengine_config.FACEBOOK_APP_SECRET = 'my_secret'
 
   def test_comment_to_salmon_vars(self):
     self.assert_equals(
@@ -54,3 +61,33 @@ class FacebookTest(testutil.HandlerTest):
 
     del comment['id']
     self.assertRaises(ValueError, self.facebook.comment_to_salmon_vars, comment)
+
+  def test_get_access_token(self):
+    resp = facebook.application.get_response('/facebook/add', method='POST',
+                                             environ={'HTTP_HOST': 'HOST'})
+    self.assertEqual(302, resp.status_int)
+    redirect = resp.headers['Location']
+
+    parsed = urlparse.urlparse(redirect)
+    self.assertEqual('/dialog/oauth/', parsed.path)
+
+    expected_params = {
+      'scope': ['read_stream,offline_access'],
+      'client_id': ['my_app_id'],
+      'redirect_uri': ['http://HOST/facebook/got_auth_code'],
+      'response_type': ['code'],
+      'state': ['http://HOST/facebook/got_access_token'],
+      }
+    self.assert_equals(expected_params, urlparse.parse_qs(parsed.query))
+
+  def test_got_auth_code(self):
+    comparator = mox.Regex('.*/oauth/access_token\?.*&code=my_auth_code.*')
+    self.expect_urlfetch(comparator, 'foo=bar&access_token=my_access_token')
+
+    self.mox.ReplayAll()
+    resp = facebook.application.get_response(
+      '/facebook/got_auth_code?code=my_auth_code&state=http://my/redirect_to',
+      environ={'HTTP_HOST': 'HOST'})
+    self.assertEqual(302, resp.status_int)
+    self.assertEqual('http://my/redirect_to?access_token=my_access_token',
+                     resp.headers['Location'])

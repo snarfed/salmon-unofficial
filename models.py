@@ -64,51 +64,8 @@ class User(util.KeyNameModel, util.SingleEGModel):
       return user.user_id()
 
 
-class Site(util.KeyNameModel, util.SingleEGModel):
-  """A web site for a single entity, e.g. a Facebook or Twitter profile.
-
-  Not intended to be used directly. Inherit from Source instead.
-  """
-
-  # human-readable name for this site type. subclasses should override.
-  TYPE_NAME = None
-
-  url = db.LinkProperty()
-  owner = db.ReferenceProperty(User)
-
-  def display_name(self):
-    """Returns a human-readable name for this site, e.g. 'My Thoughts'.
-
-    Defaults to the url. May be overridden by subclasses.
-    """
-    return util.reduce_url(self.url)
-
-  def type_display_name(self):
-    """Returns a human-readable name for this type of site, e.g. 'Facebook'.
-    
-    May be overridden by subclasses.
-    """
-    return self.TYPE_NAME
-
-  def label(self):
-    """Human-readable label for this site."""
-    return '%s: %s' % (self.type_display_name(), self.display_name())
-
-  @classmethod
-  @db.transactional
-  def create_new(cls, **kwargs):
-    """Creates and saves a new Site.
-
-    Args:
-      **kwargs: passed to new()
-    """
-    new = cls.new(**kwargs)
-    new.save()
-    return new
-
-
-class Source(Site):
-  """A web site to read posts from, e.g. a Facebook profile.
+class Source(util.KeyNameModel, util.SingleEGModel):
+  """A source to read posts from, e.g. a Facebook profile.
 
   Each concrete source should subclass this.
   """
@@ -118,12 +75,55 @@ class Source(Site):
 
   last_polled = db.DateTimeProperty(default=EPOCH)
 
-  def new(self, **kwargs):
+  # human-readable name for this source type. subclasses should override.
+  TYPE_NAME = None
+
+  url = db.LinkProperty()
+  owner = db.ReferenceProperty(User)
+
+  @classmethod
+  def create_new(cls, handler, **kwargs):
+    """Creates and saves a new Source and adds a poll task for it.
+
+    Args:
+      handler: the current webapp.RequestHandler
+      **kwargs: passed to new()
+    """
+    new = cls.new(handler, **kwargs)
+    new.save()
+    new.add_poll_task()
+    return new
+
+  @classmethod
+  def new(cls, handler, **kwargs):
     """Factory method. Creates and returns a new instance for the current user.
 
     To be implemented by subclasses.
+
+    Args:
+      handler: the current webapp.RequestHandler
+      **kwargs: passed to new()
     """
     raise NotImplementedError()
+
+  def display_name(self):
+    """Returns a human-readable name for this source, e.g. 'My Thoughts'.
+
+    Defaults to the url. May be overridden by subclasses.
+    """
+    return util.reduce_url(self.url)
+
+  def type_display_name(self):
+    """Returns a human-readable name for this type of source, e.g. 'Facebook'.
+    
+    May be overridden by subclasses.
+    """
+    return self.TYPE_NAME
+
+  def label(self):
+    """Human-readable label for this source."""
+    return '%s: %s' % (self.type_display_name(), self.display_name())
+
 
   def get_posts(self):
     """Returns a list of the most recent posts from this source.
@@ -134,17 +134,6 @@ class Source(Site):
       url for the post
     """
     raise NotImplementedError()
-
-  @classmethod
-  def create_new(cls, **kwargs):
-    """Creates and saves a new Source and adds a poll task for it.
-
-    Args:
-      **kwargs: passed to new()
-    """
-    new = super(Source, cls).create_new(**kwargs)
-    new.add_poll_task()
-    return new
 
   def add_poll_task(self, **kwargs):
     """Adds a poll task for this source."""
