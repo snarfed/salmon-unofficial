@@ -1,6 +1,7 @@
-/*
- * Stylesheet for the front page, mostly the demo form.
- */
+body, input, textarea {
+  font-family: Arial, sans-serif;
+  font-size: medium;
+}
 
 div#description {
   max-width: 700px;
@@ -10,14 +11,27 @@ img#logo {
   float: right;
 }
 
+a img {
+  border: none;
+}
+
 select, input[type=text] {
   border: 1px solid gray;
 }
 
-#sources, #destinations {
+#sources {
   border-spacing: .2em .2em;
 }
 
-#sources *, #destinations * {
+#sources * {
   vertical-align: middle;
+}
+
+input[type="submit"] {
+  margin-right: .5em;
+  margin-top: .5em;
+}
+
+select, input[type="submit"], input[type="text"] {
+  margin: .3em;
 }

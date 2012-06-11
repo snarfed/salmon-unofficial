@@ -4,13 +4,21 @@
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
-from models import Source
+import re
+import urlparse
+from webob import exc
+
+import appengine_config
+import models
 
 from webutil import util
+from webutil import webapp2
 
 
-class Twitter(Source):
-  """Implements the Salmon API for Twitter.
+class TwitterSearch(models.Source):
+  """A Twitter search for posts that link to a given domain.
+
+  The key name is the domain.
   """
 
   DOMAIN = 'twitter.com'
@@ -41,3 +49,44 @@ class Twitter(Source):
       vars['in_reply_to_tag'] = util.tag_uri(self.DOMAIN, parent_id)
 
     return vars
+
+
+class AddTwitterSearch(webapp2.RequestHandler):
+  def post(self):
+    value = self.request.get('domain')
+    parsed = urlparse.urlparse(value)
+    if not parsed.netloc:
+      parsed = urlparse.urlparse('http://' + value)
+
+    domain = parsed.netloc
+    if not domain:
+      raise exc.HTTPBadRequest('No domain found in %r' % value)
+
+    # strip exactly one dot from the right, if present
+    if domain[-1:] == ".":
+      domain = domain[:-1] 
+
+    split = domain.split('.')
+    if len (split) <= 1:
+      raise exc.HTTPBadRequest('No TLD found in domain %r' % domain)
+
+    # http://stackoverflow.com/questions/2532053/validate-hostname-string-in-python
+    allowed = re.compile('(?!-)[A-Z\d-]{1,63}(?<!-)$', re.IGNORECASE)
+    for part in split:
+      if not allowed.match(part):
+        raise exc.HTTPBadRequest('Bad component in domain: %r' % part)
+
+    TwitterSearch(key_name=domain).save()
+    self.redirect('/')
+
+
+application = webapp2.WSGIApplication(
+  [('/twitter/add', AddTwitterSearch)],
+  debug=appengine_config.DEBUG)
+
+def main():
+  run_wsgi_app(application)
+
+
+if __name__ == '__main__':
+  main()

@@ -34,18 +34,44 @@ mailing list</a>.</p>
 <hr />
 </div>
 
-<h3>Domains</h3>
+<h3>Sources</h3>
 
-<p>This site currently sends Salmon slaps to these domains. Add your own!</p>
+<p>This site is currently generating Salmon slaps from these people's posts and
+comments, and to these (Twitter search) domains. Add your own!</p>
+
+<form method="post" action="/facebook/add">
+  <input type="submit" value="Add yourself on Facebook">
+</form>
+
+<form method="post" action="/googleplus/add">
+  <input type="submit" value="Add yourself on Google+">
+</form>
 
 <form id="domains" method="post" action="/add_domain">
+<input type="submit" value="Add your domain on Twitter: " />
 <!-- <label for="domain">Domain: </label> -->
 <input id="domain" name="domain" type="text" size="16" />
-<input type="submit" value="Add" />
 </form>
 <br />
 
-<table id="destinations">
+<table id="sources">
+{% for source in sources %}
+<tr><td>
+  <a href="{{ source.url }}">
+    <img class="source" src="{{ source.picture }}" /></a>
+</td><td>
+  <a href="{{ source.url }}">{{ source.display_name }}</a>
+</td><td>
+  ({{ source.type_display_name }})
+</td><td>
+  <form method="post" action="/delete">
+    <input name="kind" type="hidden" value="{{ source.kind }}" />
+    <input name="key_name" type="hidden" value="{{ source.key.name }}" />
+    <input type="image" src="static/trash_can.png" title="Delete" />
+  </form>
+</td></tr>
+{% endfor %}
+
 {% for domain in domains %}
 <tr><td>
   <a href="{{ domain.key.name }}">

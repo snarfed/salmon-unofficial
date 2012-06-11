@@ -10,11 +10,10 @@ __author__ = 'Ryan Barrett <salmon@ryanb.org>'
 import re
 import urlparse
 
-from models import Domain
-
-import salmon
 import appengine_config
-from webob import exc
+import facebook
+import googleplus
+import twitter
 from webutil import handlers
 from webutil import webapp2
 
@@ -22,50 +21,35 @@ from google.appengine.ext import db
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 
-class FrontPageHandler(handlers.TemplateHandler):
+class FrontPage(handlers.TemplateHandler):
   """Renders and serves /, ie the front page. """
 
   def template_file(self):
     return 'templates/index.html'
 
   def template_vars(self):
-    return {'domains': Domain.all()}
+    sources = (facebook.Facebook.all().run() +
+               googleplus.GooglePlus.all().run() +
+               twitter.TwitterSearch.all().run())
+    return {'sources': sources}
 
 
-class AddDomainHandler(webapp2.RequestHandler):
-  """Handles POSTs to /add_domain.  """
-
+class DeleteSource(webapp2.RequestHandler):
   def post(self):
-    value = self.request.get('domain')
-    parsed = urlparse.urlparse(value)
-    if not parsed.netloc:
-      parsed = urlparse.urlparse('http://' + value)
+    kind = self.request.params['kind']
+    key_name = self.request.params['key_name']
 
-    domain = parsed.netloc
-    if not domain:
-      raise exc.HTTPBadRequest('No domain found in %r' % value)
+    # this reaches down into the implementation details of
+    # SingleEGModel.shared_parent_key(). TODO: fix that.
+    db.delete(db.Key.from_path('Parent', kind, kind, key_name))
 
-    # strip exactly one dot from the right, if present
-    if domain[-1:] == ".":
-      domain = domain[:-1] 
-
-    split = domain.split('.')
-    if len (split) <= 1:
-      raise exc.HTTPBadRequest('No TLD found in domain %r' % domain)
-
-    # http://stackoverflow.com/questions/2532053/validate-hostname-string-in-python
-    allowed = re.compile('(?!-)[A-Z\d-]{1,63}(?<!-)$', re.IGNORECASE)
-    for part in split:
-      if not allowed.match(part):
-        raise exc.HTTPBadRequest('Bad component in domain: %r' % part)
-
-    Domain(key_name=domain).save()
+    # TODO: remove tasks, etc.
     self.redirect('/')
 
 
 application = webapp2.WSGIApplication(
-  [('/', FrontPageHandler),
-   ('/add_domain', AddDomainHandler),
+  [('/', FrontPage),
+   ('/delete', DeleteSource),
    ] + handlers.HOST_META_ROUTES,
   debug=appengine_config.DEBUG)
 

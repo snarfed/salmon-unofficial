@@ -19,14 +19,6 @@ from google.appengine.ext import db
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 
-class Domain(util.KeyNameModel, util.SingleEGModel):
-  """A domain that we should send Salmon slaps to.
-
-  The key name is the domain.
-  """
-  pass
-
-
 class User(util.KeyNameModel, util.SingleEGModel):
   """A registered user.
 
