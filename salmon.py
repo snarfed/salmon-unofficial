@@ -67,6 +67,10 @@ class Salmon(util.KeyNameModel):
     self.save()
     return self
 
+  def send_slap(self):
+    # TODO
+    pass
+
   def envelope(self, author_uri):
     """Signs and encloses an Atom Salmon in a Magic Signature envelope.
 

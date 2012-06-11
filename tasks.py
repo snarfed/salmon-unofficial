@@ -14,6 +14,7 @@ import itertools
 import logging
 import re
 import time
+from webob import exc
 
 # need to import model class definitions since poll creates and saves entities.
 import facebook
@@ -39,7 +40,7 @@ import appengine_config
 # it manually via monkey patch.
 #
 # - injecting a function dependency, ie Poll(now=datetime.datetime.now), worked
-# in webapp 1, like this:
+# in webapp 1, which I used in bridgy, like this:
 #
 #   application = webapp.WSGIApplication([
 #     ('/_ah/queue/poll', lambda: Poll(now=lambda: self.now)),
@@ -100,84 +101,76 @@ class Propagate(webapp2.RequestHandler):
   # request deadline (10m) plus some padding
   LEASE_LENGTH = datetime.timedelta(minutes=12)
 
-  ERROR_HTTP_RETURN_CODE = 417  # Expectation Failed
+  def post(self):
+    logging.debug('Params: %s', self.request.params)
 
-  # def post(self):
-  #   logging.debug('Params: %s', self.request.params)
+    try:
+      salmon = self.lease_salmon()
+      if salmon:
+        salmon.send_slap()
+        self.complete_salmon()
+    except Exception, e:
+      logging.exception('Propagate task failed')
+      if not isinstance(e, exc.HTTPConflict):
+        self.release_salmon()
+      raise
 
-  #   try:
-  #     salmon = self.lease_salmon()
-  #     if salmon:
-  #       salmon.dest.add_salmon(salmon)
-  #       self.complete_salmon()
-  #   except:
-  #     logging.exception('Propagate task failed')
-  #     self.release_salmon()
-  #     raise
+  @db.transactional
+  def lease_salmon(self):
+    """Attempts to acquire and lease the salmon entity.
 
-  # @db.transactional
-  # def lease_salmon(self):
-  #   """Attempts to acquire and lease the salmon entity.
+    Returns the Salmon on success, otherwise None.
 
-  #   Returns the Salmon on success, otherwise None.
+    TODO: unify with complete_salmon
+    """
+    salmon = db.get(self.request.params['salmon_key'])
 
-  #   TODO: unify with complete_salmon
-  #   """
-  #   salmon = db.get(self.request.params['salmon_key'])
+    if salmon is None:
+      raise exc.HTTPExpectationFailed('no salmon entity!')
+    elif salmon.status == 'complete':
+      # let this response return 200 and finish
+      logging.warning('duplicate task already propagated salmon')
+    elif salmon.status == 'processing' and NOW_FN() < salmon.leased_until:
+      # return error code, but don't raise an exception because we don't want
+      # the exception handler in post() to catch it and try to release the lease.
+      raise exc.HTTPConflict('duplicate task is currently processing!')
+    else:
+      assert salmon.status in ('new', 'processing')
+      salmon.status = 'processing'
+      salmon.leased_until = NOW_FN() + self.LEASE_LENGTH
+      salmon.save()
+      return salmon
 
-  #   if salmon is None:
-  #     self.fail('no salmon entity!')
-  #   elif salmon.status == 'complete':
-  #     # let this response return 200 and finish
-  #     logging.warning('duplicate task already propagated salmon')
-  #   elif salmon.status == 'processing' and self.now() < salmon.leased_until:
-  #     self.fail('duplicate task is currently processing!')
-  #   else:
-  #     assert salmon.status in ('new', 'processing')
-  #     salmon.status = 'processing'
-  #     salmon.leased_until = self.now() + self.LEASE_LENGTH
-  #     salmon.save()
-  #     return salmon
+  @db.transactional
+  def complete_salmon(self):
+    """Attempts to mark the salmon entity completed.
 
-  # @db.transactional
-  # def complete_salmon(self):
-  #   """Attempts to mark the salmon entity completed.
+    Returns True on success, False otherwise.
+    """
+    salmon = db.get(self.request.params['salmon_key'])
 
-  #   Returns True on success, False otherwise.
-  #   """
-  #   salmon = db.get(self.request.params['salmon_key'])
+    if salmon is None:
+      raise exc.HTTPExpectationFailed('salmon entity disappeared!')
+    elif salmon.status == 'complete':
+      # let this response return 200 and finish
+      logging.warning('salmon stolen and finished. did my lease expire?')
+      return
+    elif salmon.status == 'new':
+      raise exc.HTTPExpectationFailed('salmon went backward from processing to new!')
 
-  #   if salmon is None:
-  #     self.fail('salmon entity disappeared!')
-  #   elif salmon.status == 'complete':
-  #     # let this response return 200 and finish
-  #     logging.warning('salmon stolen and finished. did my lease expire?')
-  #   elif salmon.status == 'new':
-  #     self.fail('salmon went backward from processing to new!')
-  #   else:
-  #     assert salmon.status == 'processing'
-  #     salmon.status = 'complete'
-  #     salmon.save()
-  #     return True
+    assert salmon.status == 'processing'
+    salmon.status = 'complete'
+    salmon.save()
 
-  #   return False
-
-  # @db.transactional
-  # def release_salmon(self):
-  #   """Attempts to unlease the salmon entity.
-  #   """
-  #   salmon = db.get(self.request.params['salmon_key'])
-  #   if salmon.status == 'processing':
-  #     salmon.status = 'new'
-  #     salmon.leased_until = None
-  #     salmon.save()
-
-  # def fail(self, message):
-  #   """Fills in an error response status code and message.
-  #   """
-  #   self.error(self.ERROR_HTTP_RETURN_CODE)
-  #   logging.error(message)
-  #   self.response.out.write(message)
+  @db.transactional
+  def release_salmon(self):
+    """Attempts to unlease the salmon entity.
+    """
+    salmon = db.get(self.request.params['salmon_key'])
+    if salmon and salmon.status == 'processing':
+      salmon.status = 'new'
+      salmon.leased_until = None
+      salmon.save()
 
 
 application = webapp2.WSGIApplication([
