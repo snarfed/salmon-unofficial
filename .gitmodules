@@ -7,9 +7,6 @@
 [submodule "webutil"]
 	path = webutil
 	url = git@github.com:snarfed/webutil.git
-[submodule "Salmon"]
-	path = Salmon
-	url = git://github.com/singpolyma/Salmon.git
 [submodule "django-salmon"]
 	path = django-salmon
 	url = git@github.com:snarfed/django-salmon.git
