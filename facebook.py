@@ -73,20 +73,18 @@ class Facebook(models.Source):
     Args:
       handler: the current webapp2.RequestHandler
     """
-    STATE: unit test this? or move on to porting twitter adding, oauth etc
     access_token = handler.request.get('access_token')
     resp = util.urlfetch(API_USER_URL % {'id': 'me', 'access_token': access_token})
     me = json.loads(resp)
 
     id = me['id']
-    handle = me.get('username') or id
     return Facebook(
       key_name=id,
-      owner=models.User.get_current_user(),
+      owner=models.User.get_or_insert_current_user(handler),
       access_token=access_token,
-      name=me.get('name'),
-      picture='https://graph.facebook.com/%s/picture?type=small' % handle,
-      url='http://facebook.com/%s' % handle)
+      name=me.get('name', {}).get('formatted'),
+      picture='https://graph.facebook.com/%s/picture?type=small' % id,
+      url='http://facebook.com/%s' % id)
 
   def comment_to_salmon_vars(self, comment):
     """Extracts Salmon template vars from a JSON Facebook comment.

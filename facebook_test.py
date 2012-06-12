@@ -4,12 +4,15 @@
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
+import json
+
 import mox
 import urlparse
 
 import appengine_config
 import facebook
 from webutil import testutil
+from webutil import webapp2
 
 # test data
 COMMENT_JSON = {
@@ -60,6 +63,21 @@ class FacebookTest(testutil.HandlerTest):
 
     del comment['id']
     self.assertRaises(ValueError, self.facebook.comment_to_salmon_vars, comment)
+
+  def test_new(self):
+    self.expect_urlfetch('https://graph.facebook.com/me?access_token=my_token',
+                         json.dumps({'id': '1', 'name': {'formatted': 'Mr. Foo'}}))
+    self.mox.ReplayAll()
+
+    self.handler.request = webapp2.Request.blank('?access_token=my_token')
+    fb = facebook.Facebook.new(self.handler)
+
+    self.assertEqual('1', fb.key().name())
+    self.assertEqual('Mr. Foo', fb.name)
+    self.assertEqual('https://graph.facebook.com/1/picture?type=small', fb.picture)
+    self.assertEqual('http://facebook.com/1', fb.url)
+    self.assertEqual('my_token', fb.access_token)
+    self.assertEqual(self.current_user_id, fb.owner.key().name())
 
   def test_get_access_token(self):
     resp = facebook.application.get_response('/facebook/add', method='POST',
