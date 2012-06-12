@@ -38,6 +38,9 @@ class TwitterSearch(models.Source):
     return TwitterSearch(key_name=domain, url=url, picture=favicon,
                          owner=models.User.get_or_insert_current_user(handler))
 
+  def display_name(self):
+    return self.key().name()
+
   def tweet_to_salmon_vars(self, tweet):
     """Extracts Salmon template vars from a JSON tweet.
 
