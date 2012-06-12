@@ -65,6 +65,9 @@ class Facebook(models.Source):
   def display_name(self):
     return self.name
 
+  def type_display_name(self):
+    return 'Facebook'
+
   @staticmethod
   def new(handler):
     """Creates and returns a Facebook for the logged in user.

@@ -111,6 +111,9 @@ class GooglePlus(models.Source):
   def display_name(self):
     return self.name
 
+  def type_display_name(self):
+    return 'Google+'
+
   def activity_to_salmon_vars(self, activity):
     """Extracts Salmon template vars from a JSON activity.
 

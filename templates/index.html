@@ -62,20 +62,13 @@ comments, and to these (Twitter search) domains. Add your own!</p>
 </td><td>
   <a href="{{ source.url }}">{{ source.display_name }}</a>
 </td><td>
+  ({{ source.type_display_name }})
+</td><td>
   <form method="post" action="/delete">
     <input name="kind" type="hidden" value="{{ source.kind }}" />
     <input name="key_name" type="hidden" value="{{ source.key.name }}" />
     <input type="image" src="static/red_x.png" title="Delete" />
   </form>
-</td></tr>
-{% endfor %}
-
-{% for domain in domains %}
-<tr><td>
-  <a href="{{ domain.key.name }}">
-    <img class="dest" src="http://{{ domain.key.name }}/favicon.ico" /></a>
-</td><td>
-  <a href="{{ domain.key.name }}">{{ domain.key.name }}</a>
 </td></tr>
 {% endfor %}
 </table>

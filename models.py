@@ -110,9 +110,16 @@ class Source(util.KeyNameModel, util.SingleEGModel):
   def display_name(self):
     """Returns a human-readable name for this source, e.g. 'My Thoughts'.
 
-    Defaults to the url. May be overridden by subclasses.
+    To be implemented by subclasses.
     """
-    return util.reduce_url(self.url)
+    raise NotImplementedError()
+
+  def type_display_name(self):
+    """Returns a human-readable name for this type of source, e.g. 'Facebook'.
+    
+    To be implemented by subclasses.
+    """
+    raise NotImplementedError()
 
   def get_posts(self):
     """Returns a list of the most recent posts from this source.

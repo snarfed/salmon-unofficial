@@ -41,6 +41,9 @@ class TwitterSearch(models.Source):
   def display_name(self):
     return self.key().name()
 
+  def type_display_name(self):
+    return 'Twitter search'
+
   def tweet_to_salmon_vars(self, tweet):
     """Extracts Salmon template vars from a JSON tweet.
 
