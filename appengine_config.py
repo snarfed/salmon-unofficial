@@ -5,7 +5,11 @@ import sys
 import os
 
 # git submodules to allow importing from
-for submodule in 'django-salmon', 'google-api-python-client', 'python-gflags':
+for submodule in ('django-salmon',
+                  'google-api-python-client',
+                  'httplib2/python2',
+                  'python-gflags',
+                  ):
   sys.path.append(os.path.join(os.path.abspath("."), submodule))
 
 from webutil.appengine_config import *
