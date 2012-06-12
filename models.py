@@ -114,18 +114,6 @@ class Source(util.KeyNameModel, util.SingleEGModel):
     """
     return util.reduce_url(self.url)
 
-  def type_display_name(self):
-    """Returns a human-readable name for this type of source, e.g. 'Facebook'.
-    
-    May be overridden by subclasses.
-    """
-    return self.TYPE_NAME
-
-  def label(self):
-    """Human-readable label for this source."""
-    return '%s: %s' % (self.type_display_name(), self.display_name())
-
-
   def get_posts(self):
     """Returns a list of the most recent posts from this source.
  

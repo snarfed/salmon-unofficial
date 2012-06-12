@@ -4,7 +4,7 @@
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
-import googleplus
+from googleplus import GooglePlus, GooglePlusService
 from webutil import testutil
 
 # test data
@@ -65,7 +65,10 @@ class GooglePlusTest(testutil.HandlerTest):
 
   def setUp(self):
     super(GooglePlusTest, self).setUp()
-    self.googleplus = googleplus.GooglePlus(key_name='x')
+    self.googleplus = GooglePlus(key_name='x')
+
+    self.mox.StubOutWithMock(GooglePlusService, 'call')
+    self.mox.StubOutWithMock(GooglePlusService, 'call_with_creds')
 
   def test_activity_to_salmon_vars(self):
     self.assert_equals(ACTIVITY_SALMON_VARS,
@@ -78,3 +81,20 @@ class GooglePlusTest(testutil.HandlerTest):
   def test_activity_to_salmon_vars_with_in_reply_to(self):
     self.assert_equals(COMMENT_SALMON_VARS,
                        self.googleplus.activity_to_salmon_vars(COMMENT_JSON))
+
+  def test_new(self):
+    GooglePlusService.call('http placeholder', 'people.get', userId='me')\
+        .AndReturn({'id': '1',
+                    'displayName': 'Mr. Foo',
+                    'url': 'http://my.g+/url',
+                    'image': {'url': 'http://my.pic/small'},
+                    })
+    self.mox.ReplayAll()
+
+    gp = GooglePlus.new(self.handler, http='http placeholder')
+    self.assertEqual('1', gp.key().name())
+    self.assertEqual('Mr. Foo', gp.name)
+    self.assertEqual('http://my.pic/small', gp.picture)
+    self.assertEqual('http://my.g+/url', gp.url)
+    self.assertEqual(self.current_user_id, gp.owner.key().name())
+

@@ -23,9 +23,6 @@ class FakeBase(db.Model):
     cls.key_name_counter += 1
     return inst
 
-  def type_display_name(self):
-    return self.__class__.__name__
-
 
 class FakeSource(FakeBase, models.Source):
   """A fake Source class.
