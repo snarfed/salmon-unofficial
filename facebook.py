@@ -57,7 +57,6 @@ class Facebook(models.Source):
 
   # full human-readable name
   name = db.StringProperty()
-  picture = db.LinkProperty()
 
   # the token should be generated with the offline_access scope so that it
   # doesn't expire. details: http://developers.facebook.com/docs/authentication/

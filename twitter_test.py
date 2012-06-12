@@ -61,7 +61,11 @@ class TwitterSearchTest(testutil.HandlerTest):
 
       searches = TwitterSearch.all().fetch(10)
       self.assertEqual(1, len(searches))
-      self.assertEqual('asdf.com', searches[0].key().name())
+      ts = searches[0]
+      self.assertEqual('asdf.com', ts.key().name())
+      self.assertEqual('http://asdf.com/', ts.url)
+      self.assertEqual('http://asdf.com/favicon.ico', ts.picture)
+      self.assertEqual(self.current_user_id, ts.owner.key().name())
 
   def test_add_bad_domain(self):
     for domain in '', '  ', 'com', 'com.', 'a/b/c':

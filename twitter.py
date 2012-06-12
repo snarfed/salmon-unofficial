@@ -25,6 +25,19 @@ class TwitterSearch(models.Source):
 
   DOMAIN = 'twitter.com'
 
+  @staticmethod
+  def new(handler, domain=None):
+    """Returns a new TwitterSearch for the logged in user based on URL params.
+
+    Args:
+      handler: the current webapp2.RequestHandler
+    """
+    assert domain
+    url = 'http://%s/' % domain
+    favicon = util.favicon_for_url(url)
+    return TwitterSearch(key_name=domain, url=url, picture=favicon,
+                         owner=models.User.get_or_insert_current_user(handler))
+
   def tweet_to_salmon_vars(self, tweet):
     """Extracts Salmon template vars from a JSON tweet.
 
@@ -78,7 +91,7 @@ class AddTwitterSearch(webapp2.RequestHandler):
       if not allowed.match(part):
         raise exc.HTTPBadRequest('Bad component in domain: %r' % part)
 
-    TwitterSearch(key_name=domain).save()
+    TwitterSearch.create_new(self, domain=domain).save()
     self.redirect('/')
 
 

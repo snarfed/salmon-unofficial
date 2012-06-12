@@ -79,6 +79,7 @@ class Source(util.KeyNameModel, util.SingleEGModel):
   TYPE_NAME = None
 
   url = db.LinkProperty()
+  picture = db.LinkProperty()
   owner = db.ReferenceProperty(User)
 
   @classmethod
