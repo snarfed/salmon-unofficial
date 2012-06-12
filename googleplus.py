@@ -142,8 +142,12 @@ class GooglePlus(models.Source):
 class AddGooglePlus(webapp2.RequestHandler):
   @plus_api.oauth_required
   def post(self):
-    GooglePlusPage.create_new(self, http=plus_api.http())
+    GooglePlus.create_new(self, http=plus_api.http())
     self.redirect('/')
+
+  @plus_api.oauth_required
+  def get(self):
+    self.post()
 
 
 application = webapp2.WSGIApplication([
