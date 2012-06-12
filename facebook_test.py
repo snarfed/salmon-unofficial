@@ -4,19 +4,15 @@
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
-try:
-  import json
-except ImportError:
-  import simplejson as json
+import json
+
 import mox
-import urllib
 import urlparse
-from webutil import webapp2
 
 import appengine_config
 import facebook
-import source
 from webutil import testutil
+from webutil import webapp2
 
 # test data
 COMMENT_JSON = {
@@ -30,110 +26,85 @@ COMMENT_JSON = {
   'created_time': '2012-05-21T02:25:25+0000',
   'type': 'comment',
 }
-
-ATOM_SALMON = """\
-<?xml version='1.0' encoding='UTF-8'?>
-<entry xmlns='http://www.w3.org/2005/Atom'>
-  <id>tag:facebook.com,2012:10102828452385634_39170557</id>
-  <author>
-    <name>Ryan Barrett</name>
-    <uri>acct:212038@facebook-webfinger.appspot.com</uri>
-  </author>
-  <thr:in-reply-to xmlns:thr='http://purl.org/syndication/thread/1.0'
-    ref='tag:facebook.com,2012:10102828452385634'>
-    tag:facebook.com,2012:10102828452385634
-  </thr:in-reply-to>
-  <content>moire patterns: the new look for spring.</content>
-  <title>moire patterns: the new look for spring.</title>
-  <updated>2012-05-21T02:25:25+0000</updated>
-</entry>"""
-
-USER_KEY_JSON = {
-  'public_exponent': 'AQAB',
-  'private_exponent': 'FxCZ_ZWc1w77bAkBQQKUSvwZfaItwmIQRQ3A-KXVsL7Ay5D6tt5jbpQRmgBAYcVDXicq1fV7qa8cVT1Ed9_DusxXYGE=',
-  'mod': 'uQS7soeQmMedFCFBLO2L3d7W5hLIE1Jq8IVF1hB8UPrQPQdQK5yQ3IfNkInPNRVhXJSjF9BSih2JeJ_U2lGkdVMCJe7kFMFGVa6etm2A1n6u9yNmlpxNFINyoBREJ4zcPYYLzPkTYI3kY6g71E53YjUrCPXFSu8JhmPDobC0DOc=',
-}
-
-ENVELOPE_JSON = {
-  # this is base64.urlsafe_b64encode(ATOM_SALMON)
-  'data':    'PD94bWwgdmVyc2lvbj0nMS4wJyBlbmNvZGluZz0nVVRGLTgnPz4KPGVudHJ5IHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDA1L0F0b20nPgogIDxpZD50YWc6ZmFjZWJvb2suY29tLDIwMTI6MTAxMDI4Mjg0NTIzODU2MzRfMzkxNzA1NTc8L2lkPgogIDxhdXRob3I-CiAgICA8bmFtZT5SeWFuIEJhcnJldHQ8L25hbWU-CiAgICA8dXJpPmFjY3Q6MjEyMDM4QGZhY2Vib29rLXdlYmZpbmdlci5hcHBzcG90LmNvbTwvdXJpPgogIDwvYXV0aG9yPgogIDx0aHI6aW4tcmVwbHktdG8geG1sbnM6dGhyPSdodHRwOi8vcHVybC5vcmcvc3luZGljYXRpb24vdGhyZWFkLzEuMCcKICAgIHJlZj0ndGFnOmZhY2Vib29rLmNvbSwyMDEyOjEwMTAyODI4NDUyMzg1NjM0Jz4KICAgIHRhZzpmYWNlYm9vay5jb20sMjAxMjoxMDEwMjgyODQ1MjM4NTYzNAogIDwvdGhyOmluLXJlcGx5LXRvPgogIDxjb250ZW50Pm1vaXJlIHBhdHRlcm5zOiB0aGUgbmV3IGxvb2sgZm9yIHNwcmluZy48L2NvbnRlbnQ-CiAgPHRpdGxlPm1vaXJlIHBhdHRlcm5zOiB0aGUgbmV3IGxvb2sgZm9yIHNwcmluZy48L3RpdGxlPgogIDx1cGRhdGVkPjIwMTItMDUtMjFUMDI6MjU6MjUrMDAwMDwvdXBkYXRlZD4KPC9lbnRyeT4',
-  'data_type': 'application/atom+xml',
-  'encoding': 'base64url',
-  'alg': 'RSA-SHA256',
-  # the signature base string is based on section 3.2 of the magic sig spec:
-  # http://salmon-protocol.googlecode.com/svn/trunk/draft-panzer-magicsig-01.html#sbs
-  #
-  # used https://github.com/eschnou/salmon-bash :
-  # ./sign.sh input.txt key.pem
-  #
-  # here, it's these components, in order, joined with period (.) separators:
-  # >>> base64.urlsafe_b64encode(ATOM_SALMON)
-  # ...
-  # >>> base64.urlsafe_b64encode('application/atom+xml').rstrip('=')
-  # 'YXBwbGljYXRpb24vYXRvbSt4bWw'
-  # >>> base64.urlsafe_b64encode('base64url').rstrip('=')
-  # 'YmFzZTY0dXJs'
-  # >>> base64.urlsafe_b64encode('RSA-SHA256').rstrip('=')
-  # 'UlNBLVNIQTI1Ng'
-  # ...
-  # PD94bWwgdmVyc2lvbj0nMS4wJyBlbmNvZGluZz0nVVRGLTgnPz4KPGVudHJ5IHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDA1L0F0b20nPgogIDxpZD50YWc6ZmFjZWJvb2suY29tLDIwMTI6MTAxMDI4Mjg0NTIzODU2MzRfMzkxNzA1NTc8L2lkPgogIDxhdXRob3I-CiAgICA8bmFtZT5SeWFuIEJhcnJldHQ8L25hbWU-CiAgICA8dXJpPmFjY3Q6MjEyMDM4QGZhY2Vib29rLXdlYmZpbmdlci5hcHBzcG90LmNvbTwvdXJpPgogIDwvYXV0aG9yPgogIDx0aHI6aW4tcmVwbHktdG8geG1sbnM6dGhyPSdodHRwOi8vcHVybC5vcmcvc3luZGljYXRpb24vdGhyZWFkLzEuMCcKICAgIHJlZj0ndGFnOmZhY2Vib29rLmNvbSwyMDEyOjEwMTAyODI4NDUyMzg1NjM0Jz4KICAgIHRhZzpmYWNlYm9vay5jb20sMjAxMjoxMDEwMjgyODQ1MjM4NTYzNAogIDwvdGhyOmluLXJlcGx5LXRvPgogIDxjb250ZW50Pm1vaXJlIHBhdHRlcm5zOiB0aGUgbmV3IGxvb2sgZm9yIHNwcmluZy48L2NvbnRlbnQ-CiAgPHRpdGxlPm1vaXJlIHBhdHRlcm5zOiB0aGUgbmV3IGxvb2sgZm9yIHNwcmluZy48L3RpdGxlPgogIDx1cGRhdGVkPjIwMTItMDUtMjFUMDI6MjU6MjUrMDAwMDwvdXBkYXRlZD4KPC9lbnRyeT4.YXBwbGljYXRpb24vYXRvbSt4bWw.YmFzZTY0dXJs.UlNBLVNIQTI1Ng
-  'sigs': [{
-      # this is what sign.sh says, but it's not right. not sure why. :/
-      # 'value': 'PbwL0bMBBQNW_yxS1nutL2lni31fbpS1Q6LA8fDKt3cbCSzdxPZEbmoL-xnVu3ilelWeiCvzrVXVjMWEnsnVX-bCWi-_zuEwdKOw2Fgn0ejYcY_OJYgpdZYskWOPzErLBPhI0fUf0-jDjG-roiLVmjsdZDlvGDeCspQIXkRw6uk',
-      'value': 'hOR6i-xZZ7Q5Aj_KNPSF1rYIgJbX3kqw90QCO6Rrv2KQW7cWC1gITOpfSyd2slek2NQLwSj4vzBecvD-16Jb-YpcBiD6Roppok4t4aZrJppX6ZZZ6i6T3FGPEiH1_yl_QeIfDXduS-bwS5KETvtvQIRSd8FK0CBK686D4YhfrHY=',
-      }],
+SALMON_VARS = {
+  'id_tag': 'tag:facebook.com,2012:10102828452385634_39170557',
+  'author_name': 'Ryan Barrett',
+  'author_uri': 'acct:212038@facebook-webfinger.appspot.com',
+  # TODO: this should be the original domain link
+  'in_reply_to_tag': 'tag:facebook.com,2012:10102828452385634',
+  'content': 'moire patterns: the new look for spring.',
+  'title': 'moire patterns: the new look for spring.',
+  'updated': '2012-05-21T02:25:25+0000',
   }
-
-ENVELOPE_XML = """\
-<me:env xmlns:me="http://salmon-protocol.org/ns/magic-env">
-<me:data type="application/atom+xml">
-PD94bWwgdmVyc2lvbj0nMS4wJyBlbmNvZGluZz0nVVRGLTgnPz4KPGVudHJ5IHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDA1L0F0b20nPgogIDxpZD50YWc6ZmFjZWJvb2suY29tLDIwMTI6MTAxMDI4Mjg0NTIzODU2MzRfMzkxNzA1NTc8L2lkPgogIDxhdXRob3I-CiAgICA8bmFtZT5SeWFuIEJhcnJldHQ8L25hbWU-CiAgICA8dXJpPmFjY3Q6MjEyMDM4QGZhY2Vib29rLXdlYmZpbmdlci5hcHBzcG90LmNvbTwvdXJpPgogIDwvYXV0aG9yPgogIDx0aHI6aW4tcmVwbHktdG8geG1sbnM6dGhyPSdodHRwOi8vcHVybC5vcmcvc3luZGljYXRpb24vdGhyZWFkLzEuMCcKICAgIHJlZj0ndGFnOmZhY2Vib29rLmNvbSwyMDEyOjEwMTAyODI4NDUyMzg1NjM0Jz4KICAgIHRhZzpmYWNlYm9vay5jb20sMjAxMjoxMDEwMjgyODQ1MjM4NTYzNAogIDwvdGhyOmluLXJlcGx5LXRvPgogIDxjb250ZW50Pm1vaXJlIHBhdHRlcm5zOiB0aGUgbmV3IGxvb2sgZm9yIHNwcmluZy48L2NvbnRlbnQ-CiAgPHRpdGxlPm1vaXJlIHBhdHRlcm5zOiB0aGUgbmV3IGxvb2sgZm9yIHNwcmluZy48L3RpdGxlPgogIDx1cGRhdGVkPjIwMTItMDUtMjFUMDI6MjU6MjUrMDAwMDwvdXBkYXRlZD4KPC9lbnRyeT4=
-</me:data>
-<me:encoding>
-base64url
-</me:encoding>
-<me:alg>
-RSA-SHA256
-</me:alg>
-<me:sig>
-hOR6i-xZZ7Q5Aj_KNPSF1rYIgJbX3kqw90QCO6Rrv2KQW7cWC1gITOpfSyd2slek2NQLwSj4vzBecvD-16Jb-YpcBiD6Roppok4t4aZrJppX6ZZZ6i6T3FGPEiH1_yl_QeIfDXduS-bwS5KETvtvQIRSd8FK0CBK686D4YhfrHY=
-</me:sig>
-
-</me:env>
-"""
 
 
 class FacebookTest(testutil.HandlerTest):
 
   def setUp(self):
     super(FacebookTest, self).setUp()
-    self.facebook = facebook.Facebook(self.handler)
-    appengine_config.USER_KEY_HANDLER_SECRET = 'my_secret'
+    self.facebook = facebook.Facebook(key_name='x')
+    appengine_config.FACEBOOK_APP_ID = 'my_app_id'
+    appengine_config.FACEBOOK_APP_SECRET = 'my_secret'
 
-  def test_comment_to_salmon(self):
-    self.assert_multiline_equals(ATOM_SALMON,
-                                 self.facebook.comment_to_salmon(COMMENT_JSON))
+  def test_comment_to_salmon_vars(self):
+    self.assert_equals(
+      SALMON_VARS, self.facebook.comment_to_salmon_vars(COMMENT_JSON))
 
-  def test_comment_to_salmon_minimal(self):
-    salmon = self.facebook.comment_to_salmon({'id': '123_456'})
-    self.assertTrue('<id>tag:facebook.com,2012:123_456</id>' in salmon)
+  def test_comment_to_salmon_vars_minimal(self):
+    salmon = self.facebook.comment_to_salmon_vars({'id': '123_456'})
+    self.assert_equals('tag:facebook.com,2012:123_456', salmon['id_tag'])
 
-  def test_comment_to_salmon_bad_id(self):
+  def test_comment_to_salmon_vars_bad_id(self):
     comment = dict(COMMENT_JSON)
 
     for id in '123_', '_123', '123':
       comment['id'] = id
-      self.assertRaises(ValueError, self.facebook.comment_to_salmon, comment)
+      self.assertRaises(ValueError, self.facebook.comment_to_salmon_vars, comment)
 
     del comment['id']
-    self.assertRaises(ValueError, self.facebook.comment_to_salmon, comment)
+    self.assertRaises(ValueError, self.facebook.comment_to_salmon_vars, comment)
 
-  def test_envelope(self):
-    self.expect_urlfetch('https://facebook-webfinger.appspot.com/user_key'
-                         '?uri=acct:ryan@facebook.com&secret=my_secret',
-                         json.dumps(USER_KEY_JSON))
+  def test_new(self):
+    self.expect_urlfetch('https://graph.facebook.com/me?access_token=my_token',
+                         json.dumps({'id': '1', 'name': {'formatted': 'Mr. Foo'}}))
     self.mox.ReplayAll()
 
-    envelope = self.facebook.envelope(ATOM_SALMON, 'acct:ryan@facebook.com')\
-        .replace('>', '>\n').replace('</', '\n</')
-    self.assert_multiline_equals(ENVELOPE_XML, envelope)
+    self.handler.request = webapp2.Request.blank('?access_token=my_token')
+    fb = facebook.Facebook.new(self.handler)
+
+    self.assertEqual('1', fb.key().name())
+    self.assertEqual('Mr. Foo', fb.name)
+    self.assertEqual('https://graph.facebook.com/1/picture?type=small', fb.picture)
+    self.assertEqual('http://facebook.com/1', fb.url)
+    self.assertEqual('my_token', fb.access_token)
+    self.assertEqual(self.current_user_id, fb.owner.key().name())
+
+  def test_get_access_token(self):
+    resp = facebook.application.get_response('/facebook/add', method='POST',
+                                             environ={'HTTP_HOST': 'HOST'})
+    self.assertEqual(302, resp.status_int)
+    redirect = resp.headers['Location']
+
+    parsed = urlparse.urlparse(redirect)
+    self.assertEqual('/dialog/oauth/', parsed.path)
+
+    expected_params = {
+      'scope': ['read_stream,offline_access'],
+      'client_id': ['my_app_id'],
+      'redirect_uri': ['http://HOST/facebook/got_auth_code'],
+      'response_type': ['code'],
+      'state': ['http://HOST/facebook/got_access_token'],
+      }
+    self.assert_equals(expected_params, urlparse.parse_qs(parsed.query))
+
+  def test_got_auth_code(self):
+    comparator = mox.Regex('.*/oauth/access_token\?.*&code=my_auth_code.*')
+    self.expect_urlfetch(comparator, 'foo=bar&access_token=my_access_token')
+
+    self.mox.ReplayAll()
+    resp = facebook.application.get_response(
+      '/facebook/got_auth_code?code=my_auth_code&state=http://my/redirect_to',
+      environ={'HTTP_HOST': 'HOST'})
+    self.assertEqual(302, resp.status_int)
+    self.assertEqual('http://my/redirect_to?access_token=my_access_token',
+                     resp.headers['Location'])

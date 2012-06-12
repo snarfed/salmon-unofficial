@@ -4,67 +4,101 @@
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
-import cgi
-import collections
-import datetime
-try:
-  import json
-except ImportError:
-  import simplejson as json
-import re
+import json
+import logging
 import urllib
 import urlparse
 
 import appengine_config
-import source
+import models
+
 from webutil import util
-from django_salmon import magicsigs
-from django_salmon import utils
+from webutil import webapp2
+
+from google.appengine.api import urlfetch
+from google.appengine.ext import db
+from google.appengine.ext.webapp.util import run_wsgi_app
+
+# facebook api url templates. can't (easily) use urllib.urlencode() because i
+# want to keep the %(...)s placeholders as is and fill them in later in code.
+# TODO: use appengine_config.py for local mockfacebook vs prod facebook
+GET_AUTH_CODE_URL = '&'.join((
+    ('http://localhost:8000/dialog/oauth/?'
+     if appengine_config.MOCKFACEBOOK else
+     'https://www.facebook.com/dialog/oauth/?'),
+    'scope=read_stream,offline_access',
+    'client_id=%(client_id)s',
+    # redirect_uri here must be the same in the access token request!
+    'redirect_uri=%(host_url)s/facebook/got_auth_code',
+    'response_type=code',
+    'state=%(state)s',
+    ))
+
+GET_ACCESS_TOKEN_URL = '&'.join((
+    ('http://localhost:8000/oauth/access_token?'
+     if appengine_config.MOCKFACEBOOK else
+     'https://graph.facebook.com/oauth/access_token?'),
+    'client_id=%(client_id)s',
+    # redirect_uri here must be the same in the oauth request!
+    # (the value here doesn't actually matter since it's requested server side.)
+    'redirect_uri=%(host_url)s/facebook/got_auth_code',
+    'client_secret=%(client_secret)s',
+    'code=%(auth_code)s',
+    ))
+
+API_USER_URL = 'https://graph.facebook.com/%(id)s?access_token=%(access_token)s'
 
 
-# temporary URL for fetching magic sig private keys from webfinger-unofficial
-USER_KEY_HANDLER = \
-    'https://facebook-webfinger.appspot.com/user_key?uri=%s&secret=%s'
-
-# Templates for Atom Salmons and Magic Envelopes. Note that the format
-# specifiers have mapping keys. Used in comment_to_salmon().
-ATOM_SALMON_TEMPLATE = """\
-<?xml version='1.0' encoding='UTF-8'?>
-<entry xmlns='http://www.w3.org/2005/Atom'>
-  <id>%(id_tag)s</id>
-  <author>
-    <name>%(author_name)s</name>
-    <uri>%(author_uri)s</uri>
-  </author>
-  <thr:in-reply-to xmlns:thr='http://purl.org/syndication/thread/1.0'
-    ref='%(in_reply_to_tag)s'>
-    %(in_reply_to_tag)s
-  </thr:in-reply-to>
-  <content>%(content)s</content>
-  <title>%(title)s</title>
-  <updated>%(updated)s</updated>
-</entry>"""
-
-
-class Facebook(source.Source):
+class Facebook(models.Source):
   """Implements the Salmon API for Facebook.
   """
 
   DOMAIN = 'facebook.com'
-  FRONT_PAGE_TEMPLATE = 'templates/facebook_index.html'
 
+  # full human-readable name
+  name = db.StringProperty()
 
-  def comment_to_salmon(self, comment):
-    """Converts a Facebook JSON comment dict to an Atom Salmon.
+  # the token should be generated with the offline_access scope so that it
+  # doesn't expire. details: http://developers.facebook.com/docs/authentication/
+  access_token = db.StringProperty()
+
+  def display_name(self):
+    return self.name
+
+  def type_display_name(self):
+    return 'Facebook'
+
+  @staticmethod
+  def new(handler):
+    """Creates and returns a Facebook for the logged in user.
+
+    Args:
+      handler: the current webapp2.RequestHandler
+    """
+    access_token = handler.request.get('access_token')
+    resp = util.urlfetch(API_USER_URL % {'id': 'me', 'access_token': access_token})
+    me = json.loads(resp)
+
+    id = me['id']
+    return Facebook(
+      key_name=id,
+      owner=models.User.get_or_insert_current_user(handler),
+      access_token=access_token,
+      name=me.get('name', {}).get('formatted'),
+      picture='https://graph.facebook.com/%s/picture?type=small' % id,
+      url='http://facebook.com/%s' % id)
+
+  def comment_to_salmon_vars(self, comment):
+    """Extracts Salmon template vars from a JSON Facebook comment.
 
     Args:
       comment: JSON dict
 
-    Returns: string
+    Returns: dict of template vars for ATOM_SALMON_TEMPLATE
 
     Raises:
       ValueError if comment['id'] cannot be parsed. It should be of the form
-      PARENT_COMMENT.
+      PARENT_COMMENT
     """
     id = comment.get('id', '')
     parent_id, _, cmt_id = id.partition('_')
@@ -73,33 +107,79 @@ class Facebook(source.Source):
 
     cmt_from = comment.get('from', {})
 
-    return ATOM_SALMON_TEMPLATE % {
-      'id_tag': self.tag_uri(id),
+    return {
+      'id_tag': util.tag_uri(self.DOMAIN, id),
       'author_name': cmt_from.get('name'),
       'author_uri': 'acct:%s@facebook-webfinger.appspot.com' % cmt_from.get('id'),
-      'in_reply_to_tag': self.tag_uri(parent_id),
+      # TODO: this should be the original domain link
+      'in_reply_to_tag': util.tag_uri(self.DOMAIN, parent_id),
       'content': comment.get('message'),
       'title': comment.get('message'),
       'updated': comment.get('created_time'),
       }
 
-  def envelope(self, salmon, author_uri):
-    """Signs and encloses an Atom Salmon in a Magic Signature envelope.
 
-    Fetches the author's Magic Signatures public key via LRDD in order to create
-    the signature.
+class AddFacebook(webapp2.RequestHandler):
+  def post(self):
+    """Gets an access token for the current user.
 
-    Args:
-      salmon: string, an Atom Salmon
-      author_uri: string, the author's URI, beginning with acct:
-
-    Returns: JSON dict following Magic Signatures spec section 3.5:
-    http://salmon-protocol.googlecode.com/svn/trunk/draft-panzer-magicsig-01.html#anchor5
+    Actually just gets the auth code and redirects to /facebook_got_auth_code,
+    which makes the next request to get the access token.
     """
-    class Struct(object):
-      def __init__(self, **kwargs):
-        vars(self).update(**kwargs)
+    redirect_uri = '/facebook/got_access_token'
 
-    key_url = USER_KEY_HANDLER % (author_uri, appengine_config.USER_KEY_HANDLER_SECRET)
-    key = Struct(**json.loads(util.urlfetch(key_url)))
-    return magicsigs.magic_envelope(salmon, 'application/atom+xml', key)
+    url = GET_AUTH_CODE_URL % {
+      'client_id': appengine_config.FACEBOOK_APP_ID,
+      # TODO: CSRF protection identifier.
+      # http://developers.facebook.com/docs/authentication/
+      'host_url': self.request.host_url,
+      'state': self.request.host_url + redirect_uri,
+      # 'state': urllib.quote(json.dumps({'redirect_uri': redirect_uri})),
+      }
+    self.redirect(url)
+
+
+class GotAuthCode(webapp2.RequestHandler):
+  def get(self):
+    """Gets an access token based on an auth code."""
+    auth_code = self.request.get('code')
+    assert auth_code
+
+    redirect_uri = urllib.unquote(self.request.get('state'))
+    assert '?' not in redirect_uri
+
+    # TODO: handle permission declines, errors, etc
+    url = GET_ACCESS_TOKEN_URL % {
+      'auth_code': auth_code,
+      'client_id': appengine_config.FACEBOOK_APP_ID,
+      'client_secret': appengine_config.FACEBOOK_APP_SECRET,
+      'host_url': self.request.host_url,
+      }
+    resp = urlfetch.fetch(url, deadline=999)
+    # TODO: error handling. handle permission declines, errors, etc
+    logging.debug('access token response: %s' % resp.content)
+    params = urlparse.parse_qs(resp.content)
+    access_token = params['access_token'][0]
+
+    url = '%s?access_token=%s' % (redirect_uri, access_token)
+    self.redirect(url)
+    
+
+class GotAccessToken(webapp2.RequestHandler):
+  def get(self):
+    Facebook.create_new(self)
+    self.redirect('/')
+
+
+application = webapp2.WSGIApplication([
+    ('/facebook/add', AddFacebook),
+    ('/facebook/got_auth_code', GotAuthCode),
+    ('/facebook/got_access_token', GotAccessToken),
+    ], debug=appengine_config.DEBUG)
+
+def main():
+  run_wsgi_app(application)
+
+
+if __name__ == '__main__':
+  main()

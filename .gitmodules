@@ -7,9 +7,15 @@
 [submodule "webutil"]
 	path = webutil
 	url = git@github.com:snarfed/webutil.git
-[submodule "Salmon"]
-	path = Salmon
-	url = git://github.com/singpolyma/Salmon.git
 [submodule "django-salmon"]
 	path = django-salmon
 	url = git@github.com:snarfed/django-salmon.git
+[submodule "google-api-python-client"]
+	path = google-api-python-client
+	url = git://github.com/votizen/google-api-python-client.git
+[submodule "python-gflags"]
+	path = python-gflags
+	url = git://github.com/wishabi/python-gflags.git
+[submodule "httplib2"]
+	path = httplib2
+	url = git://github.com/kerin/httplib2.git

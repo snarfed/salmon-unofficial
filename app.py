@@ -7,30 +7,54 @@ host-meta.xrds (XRDS-Simple), and host-meta.jrd (JRD ie JSON).
 
 __author__ = 'Ryan Barrett <salmon@ryanb.org>'
 
-import salmon
-import appengine_config
-from webutil import handlers
+import itertools
+import re
+import urlparse
 
-from google.appengine.ext import webapp
+import appengine_config
+import facebook
+import googleplus
+import twitter
+from webutil import handlers
+from webutil import webapp2
+
+from google.appengine.ext import db
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 
-class FrontPageHandler(handlers.TemplateHandler):
-  """Renders and serves /, ie the front page.
-  """
+class FrontPage(handlers.TemplateHandler):
+  """Renders and serves /, ie the front page. """
+
   def template_file(self):
-    return salmon.SOURCE.FRONT_PAGE_TEMPLATE
+    return 'templates/index.html'
 
   def template_vars(self):
-    return {'domain': salmon.SOURCE.DOMAIN,
-            'auth_url': salmon.SOURCE.AUTH_URL,
-            }
+    sources = itertools.chain(facebook.Facebook.all().run(),
+                              googleplus.GooglePlus.all().run(),
+                              twitter.TwitterSearch.all().run())
+    return {'sources': sources}
 
+
+class DeleteSource(webapp2.RequestHandler):
+  def post(self):
+    kind = self.request.params['kind']
+    key_name = self.request.params['key_name']
+
+    # this reaches down into the implementation details of
+    # SingleEGModel.shared_parent_key(). TODO: fix that.
+    db.delete(db.Key.from_path('Parent', kind, kind, key_name))
+
+    # TODO: remove tasks, etc.
+    self.redirect('/')
+
+
+application = webapp2.WSGIApplication(
+  [('/', FrontPage),
+   ('/delete', DeleteSource),
+   ] + handlers.HOST_META_ROUTES,
+  debug=appengine_config.DEBUG)
 
 def main():
-  application = webapp.WSGIApplication(
-      [('/', FrontPageHandler)] + handlers.HOST_META_ROUTES,
-      debug=appengine_config.DEBUG)
   run_wsgi_app(application)
 
 
