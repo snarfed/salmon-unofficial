@@ -56,7 +56,9 @@ skip_files:
 - ^(.*/)?.*/RCS/.*
 - ^(.*/)?\..*
 - ^(.*/)?.*\.bak$
-# don't need anything in the webapp-improved or Salmon subdirs, especially since
-# webapp-improved/lib/ has over 1k files!
+# don't need anything in the webapp-improved or Salmon or
+# google-api-python-client subdirs, especially since webapp-improved/lib/ has
+# over 1k files!
 - webutil/webapp-improved/.*/.*
 - ^Salmon/(at-salmon|salmon-playground)/.*
+- ^google-api-python-client/(docs|samples|tests)/.*
