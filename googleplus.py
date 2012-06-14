@@ -6,6 +6,7 @@ __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
 import httplib2
 import os
+import urlparse
 
 import models
 
@@ -117,6 +118,8 @@ class GooglePlus(models.Source):
   def activity_to_salmon_vars(self, activity):
     """Extracts Salmon template vars from a JSON activity.
 
+    https://developers.google.com/+/api/latest/activies#resource
+
     Args:
       activity: JSON dict
 
@@ -125,19 +128,22 @@ class GooglePlus(models.Source):
     actor = activity.get('actor', {})
     content = activity.get('object', {}).get('content')
     title = activity.get('title')
+
+    # find the attached link, if any
+    link = None
+    for attachment in activity.get('object', {}).get('attachments', []):
+      link = attachment.get('url')
+
     vars = {
       'id': util.tag_uri(self.DOMAIN, activity.get('id')),
       'author_name': actor.get('displayName'),
       'author_uri': 'acct:%s@gmail.com' % actor.get('id'),
       # TODO: this should be the original domain link
+      'in_reply_to': link,
       'content': content,
       'title': title if title else content,
       'updated': activity.get('published'),
       }
-
-    in_reply_to = activity.get('inReplyTo')
-    if in_reply_to:
-      vars['in_reply_to'] = util.tag_uri(self.DOMAIN, in_reply_to[0].get('id'))
 
     return vars
 
