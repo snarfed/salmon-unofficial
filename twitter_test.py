@@ -68,7 +68,6 @@ MENTIONS_JSON = [
    'from_user_name': 'user 3 name',
    'id': 3,
    'in_reply_to_status_id': 1,
-   # note the @ mention and hashtag for testing TwitterSearch.linkify()
    'text': '@user1 i hereby #reply',
    'to_user': 'user1',
    },
