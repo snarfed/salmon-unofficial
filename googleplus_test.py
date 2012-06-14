@@ -26,7 +26,7 @@ ACTIVITY_JSON = {
     },
   }
 ACTIVITY_SALMON_VARS = {
-  'id_tag': 'tag:plus.google.com,2012:123',
+  'id': 'tag:plus.google.com,2012:123',
   'author_name': 'Ryan Barrett',
   'author_uri': 'acct:103651231634018158746@gmail.com',
   'content': 'moire patterns: the new look for spring.',
@@ -50,11 +50,11 @@ COMMENT_JSON = {
       }],
   }
 COMMENT_SALMON_VARS = {
-  'id_tag': 'tag:plus.google.com,2012:ccg0o1_OvkYgU_fVvw5-gO2rdf3',
+  'id': 'tag:plus.google.com,2012:ccg0o1_OvkYgU_fVvw5-gO2rdf3',
   'author_name': 'fred',
   'author_uri': 'acct:222@gmail.com',
   # TODO: this should be the original domain link
-  'in_reply_to_tag': 'tag:plus.google.com,2012:123',
+  'in_reply_to': 'tag:plus.google.com,2012:123',
   'content': 'i agree',
   'title': 'i agree',
   'updated': '2012-06-03T05:33:10.789Z',
@@ -76,7 +76,7 @@ class GooglePlusTest(testutil.HandlerTest):
 
   def test_activity_to_salmon_vars_minimal(self):
     salmon = self.googleplus.activity_to_salmon_vars({'id': '123'})
-    self.assert_equals('tag:plus.google.com,2012:123', salmon['id_tag'])
+    self.assert_equals('tag:plus.google.com,2012:123', salmon['id'])
 
   def test_activity_to_salmon_vars_with_in_reply_to(self):
     self.assert_equals(COMMENT_SALMON_VARS,

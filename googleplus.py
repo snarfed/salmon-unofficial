@@ -126,7 +126,7 @@ class GooglePlus(models.Source):
     content = activity.get('object', {}).get('content')
     title = activity.get('title')
     vars = {
-      'id_tag': util.tag_uri(self.DOMAIN, activity.get('id')),
+      'id': util.tag_uri(self.DOMAIN, activity.get('id')),
       'author_name': actor.get('displayName'),
       'author_uri': 'acct:%s@gmail.com' % actor.get('id'),
       # TODO: this should be the original domain link
@@ -137,7 +137,7 @@ class GooglePlus(models.Source):
 
     in_reply_to = activity.get('inReplyTo')
     if in_reply_to:
-      vars['in_reply_to_tag'] = util.tag_uri(self.DOMAIN, in_reply_to[0].get('id'))
+      vars['in_reply_to'] = util.tag_uri(self.DOMAIN, in_reply_to[0].get('id'))
 
     return vars
 

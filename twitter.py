@@ -1,9 +1,15 @@
 #!/usr/bin/python
 """Twitter source class.
+
+Python code to pretty-print JSON responses from Twitter Search API:
+pprint.pprint(json.loads(urllib.urlopen(
+  'http://search.twitter.com/search.json?q=snarfed.org+filter%3Alinks&include_entities=true&result_type=recent&rpp=100').read()))
 """
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
+import json
+import logging
 import re
 import urlparse
 from webob import exc
@@ -15,6 +21,14 @@ from webutil import util
 from webutil import webapp2
 
 from google.appengine.ext.webapp.util import run_wsgi_app
+
+# Search for tweets using the Twitter Search API.
+#
+# Background:
+# https://dev.twitter.com/docs/using-search
+# https://dev.twitter.com/docs/api/1/get/search
+# http://stackoverflow.com/questions/2693553/replies-to-a-particular-tweet-twitter-api
+API_SEARCH_URL = 'http://search.twitter.com/search.json?q=%s+filter:links&include_entities=true&result_type=recent&rpp=100'
 
 
 class TwitterSearch(models.Source):
@@ -53,24 +67,75 @@ class TwitterSearch(models.Source):
     Returns: dict of template vars for ATOM_SALMON_TEMPLATE
     """
     # there might be more than one URL in the tweet. find the one on our domain.
-    link = ''
-    for url in tweet.get('entities', {}).get('urls', []):
-      expanded = url['expanded_url']
-      if urlparse.urlparse(expanded).netloc == self.key().name():
-        link = expanded
+    # https://dev.twitter.com/docs/tweet-entities
+    link = None
+    for url_data in tweet.get('entities', {}).get('urls', []):
+      # expanded_url isn't always provided
+      url = url_data.get('expanded_url') or url_data.get('url')
+      if url and urlparse.urlparse(url).netloc == self.key().name():
+        link = url
 
-    vars = {
-      'id_tag': util.tag_uri(self.DOMAIN, str(tweet.get('id'))),
+    return {
+      'id': util.tag_uri(self.DOMAIN, str(tweet.get('id'))),
       'author_name': tweet.get('from_user_name'),
       'author_uri': 'acct:%s@twitter-webfinger.appspot.com' % tweet.get('from_user'),
-      'in_reply_to_tag': link,
+      'in_reply_to': link,
       'content': tweet.get('text'),
       'title': tweet.get('text'),
       # TODO: use rfc2822_to_iso8601() from activitystreams-unofficial/twitter.py
       'updated': tweet.get('created_at'),
       }
 
-    return vars
+  @staticmethod
+  def tweet_url(username, id):
+    """Returns the URL of a tweet."""
+    return 'http://twitter.com/%s/status/%d' % (username, id)
+
+  def get_salmon(self):
+    """Returns a list of Salmon template var dicts for tweets and replies."""
+    # find tweets with links that include our base url. response is JSON tweets:
+    # https://dev.twitter.com/docs/api/1/get/search
+    resp = util.urlfetch(API_SEARCH_URL % self.key().name())
+    tweets = json.loads(resp)['results']
+
+    # twitter usernames of people who wrote tweets with links to our domain
+    author_usernames = set()
+
+    # maps tweet id to the link (to our domain) that it contains
+    tweets_to_links = {}
+
+    # get tweets that link to our domain
+    salmons = []
+    for tweet in tweets:
+      id = tweet.get('id')
+      username = tweet.get('from_user')
+      tweet_url = self.tweet_url(username, id)
+      salmon = self.tweet_to_salmon_vars(tweet)
+      if salmon['in_reply_to']:
+        logging.debug('Found link %s in tweet %s', salmon['in_reply_to'], tweet_url)
+        salmons.append(salmon)
+        author_usernames.add(username)
+        tweets_to_links[id] = salmon['in_reply_to']
+      else:
+        logging.info("Tweet %s should have %s link but doesn't. Maybe shortened?",
+                     tweet_url, self.key().name())
+
+    # find replies to those tweets by searching for tweets that mention the
+    # authors.
+    for username in author_usernames:
+      resp = util.urlfetch(API_SEARCH_URL % ('@' + username))
+      mentions = json.loads(resp)['results']
+      for mention in mentions:
+        logging.debug('Looking at mention: %s', mention)
+        link = tweets_to_links.get(mention.get('in_reply_to_status_id'))
+        if link:
+          salmon = self.tweet_to_salmon_vars(mention)
+          salmon['in_reply_to'] = link
+          salmons.append(salmon)
+          logging.debug('Found reply %s',
+                        self.tweet_url(mention['from_user'], mention['id']))
+
+    return salmons
 
 
 class AddTwitterSearch(webapp2.RequestHandler):

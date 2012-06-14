@@ -1,6 +1,5 @@
 #!/usr/bin/python
-"""Source base class.
-"""
+"""Salmon model class."""
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
@@ -24,14 +23,14 @@ USER_KEY_HANDLER = \
 ATOM_SALMON_TEMPLATE = """\
 <?xml version='1.0' encoding='UTF-8'?>
 <entry xmlns='http://www.w3.org/2005/Atom'>
-  <id>%(id_tag)s</id>
+  <id>%(id)s</id>
   <author>
     <name>%(author_name)s</name>
     <uri>%(author_uri)s</uri>
   </author>
   <thr:in-reply-to xmlns:thr='http://purl.org/syndication/thread/1.0'
-    ref='%(in_reply_to_tag)s'>
-    %(in_reply_to_tag)s
+    ref='%(in_reply_to)s'>
+    %(in_reply_to)s
   </thr:in-reply-to>
   <content>%(content)s</content>
   <title>%(title)s</title>

@@ -49,28 +49,28 @@ LINK_AND_COMMENTS_JSON = {
 
 LINK_AND_COMMENTS_SALMON_VARS = [
   {
-    'id_tag': 'tag:facebook.com,2012:309194992492775',
+    'id': 'tag:facebook.com,2012:309194992492775',
     'author_name': 'Ryan Barrett',
     'author_uri': 'acct:212038@facebook-webfinger.appspot.com',
-    'in_reply_to_tag': 'http://snarfed.org/2012-05-13_how_can_we_motivate_managers',
+    'in_reply_to': 'http://snarfed.org/2012-05-13_how_can_we_motivate_managers',
     'content': 'Hey managers, remember back before you were a manager?',
     'title': 'Hey managers, remember back before you were a manager?',
     'updated': '2012-05-14T05:40:23+0000',
     },
   {
-    'id_tag': 'tag:facebook.com,2012:309194992492775_1975744',
+    'id': 'tag:facebook.com,2012:309194992492775_1975744',
     'author_name': 'Alice',
     'author_uri': 'acct:123@facebook-webfinger.appspot.com',
-    'in_reply_to_tag': 'http://snarfed.org/2012-05-13_how_can_we_motivate_managers',
+    'in_reply_to': 'http://snarfed.org/2012-05-13_how_can_we_motivate_managers',
     'content': 'foo',
     'title': 'foo',
     'updated': '2012-05-14T05:54:48+0000',
     },
   {
-    'id_tag': 'tag:facebook.com,2012:309194992492775_1975797',
+    'id': 'tag:facebook.com,2012:309194992492775_1975797',
     'author_name': 'Bob',
     'author_uri': 'acct:456@facebook-webfinger.appspot.com',
-    'in_reply_to_tag': 'http://snarfed.org/2012-05-13_how_can_we_motivate_managers',
+    'in_reply_to': 'http://snarfed.org/2012-05-13_how_can_we_motivate_managers',
     'content': 'bar',
     'title': 'bar',
     'updated': '2012-05-14T06:15:51+0000',
@@ -88,10 +88,10 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_post_to_salmon_vars(self):
     self.assert_equals({
-      'id_tag': 'tag:facebook.com,2012:10102828452385634_39170557',
+      'id': 'tag:facebook.com,2012:10102828452385634_39170557',
       'author_name': 'Ryan Barrett',
       'author_uri': 'acct:212038@facebook-webfinger.appspot.com',
-      'in_reply_to_tag': 'http://moire/patterns',
+      'in_reply_to': 'http://moire/patterns',
       'content': 'moire patterns: the new look for spring.',
       'title': 'moire patterns: the new look for spring.',
       'updated': '2012-05-21T02:25:25+0000',
@@ -109,7 +109,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_post_to_salmon_vars_minimal(self):
     salmon = self.facebook.post_to_salmon_vars({'id': '123_456'})
-    self.assert_equals('tag:facebook.com,2012:123_456', salmon['id_tag'])
+    self.assert_equals('tag:facebook.com,2012:123_456', salmon['id'])
 
   def test_post_and_comments_to_salmon_vars(self):
     self.assert_equals(

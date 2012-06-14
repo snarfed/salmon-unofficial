@@ -13,11 +13,11 @@ from webutil import testutil
 
 
 SALMON_VARS = {
-  'id_tag': 'tag:facebook.com,2012:10102828452385634_39170557',
+  'id': 'tag:facebook.com,2012:10102828452385634_39170557',
   'author_name': 'Ryan Barrett',
   'author_uri': 'acct:212038@facebook-webfinger.appspot.com',
   # TODO: this should be the original domain link
-  'in_reply_to_tag': 'tag:facebook.com,2012:10102828452385634',
+  'in_reply_to': 'tag:facebook.com,2012:10102828452385634',
   'content': 'moire patterns: the new look for spring.',
   'title': 'moire patterns: the new look for spring.',
   'updated': '2012-05-21T02:25:25+0000',

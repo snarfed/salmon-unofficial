@@ -103,7 +103,7 @@ class Facebook(models.Source):
 
     for comment in post.get('comments', {}).get('data', []):
       comment_vars = self.post_to_salmon_vars(comment)
-      comment_vars['in_reply_to_tag'] = post_vars['in_reply_to_tag']
+      comment_vars['in_reply_to'] = post_vars['in_reply_to']
       # TODO: consider adding another in_reply_to_tag that refers to the parent
       # post. i'd need to add a conditional to the template to include that
       # second tag if and only if it's provided, though, which is annoying.
@@ -121,17 +121,17 @@ class Facebook(models.Source):
     """
     post_from = post.get('from', {})
     return {
-      'id_tag': util.tag_uri(self.DOMAIN, post.get('id')),
+      'id': util.tag_uri(self.DOMAIN, post.get('id')),
       'author_name': post_from.get('name'),
       'author_uri': 'acct:%s@facebook-webfinger.appspot.com' % post_from.get('id'),
-      'in_reply_to_tag': post.get('link'),
+      'in_reply_to': post.get('link'),
       'content': post.get('message'),
       'title': post.get('message'),
       'updated': post.get('created_time'),
       }
 
   def get_salmon(self):
-    """Returns a list of Salmon entities for posts with links and their comments."""
+    """Returns a list of Salmon template var dicts for posts and their comments."""
     resp = json.loads(util.urlfetch(
         API_LINKS_URL % {'id': self.key().name(), 'access_token': self.access_token}))
 

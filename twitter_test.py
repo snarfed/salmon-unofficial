@@ -5,6 +5,7 @@
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
 import copy
+import json
 
 import twitter
 from twitter import TwitterSearch
@@ -14,27 +15,91 @@ from google.appengine.ext import db
 
 
 # test data
-TWEET_JSON = {
-  'id': 123,
-  'created_at': 'Mon, 21 May 2012 02:25:25 +0000',
-  'entities': {'urls': [{'display_url': 'example.com/xyz',
-                         'expanded_url': 'http://example.com/xyz',
-                         'url': 'http://t.co/AhhEkuxo'},
-                        ]},
-  'from_user': 'snarfed',
-  'from_user_name': 'Ryan Barrett',
-  'text': 'moire patterns: the new look for spring.',
-  'in_reply_to_status_id': 456,
-  }
-SALMON_VARS = {
-  'id_tag': 'tag:twitter.com,2012:123',
-  'author_name': 'Ryan Barrett',
-  'author_uri': 'acct:snarfed@twitter-webfinger.appspot.com',
-  'in_reply_to_tag': 'http://example.com/xyz',
-  'content': 'moire patterns: the new look for spring.',
-  'title': 'moire patterns: the new look for spring.',
-  'updated': 'Mon, 21 May 2012 02:25:25 +0000',
-  }
+TWEETS_JSON = [
+  # one embedded url for example.com, no replies
+  {'id': 0,
+   'created_at': 'Mon, 21 May 2012 02:25:25 +0000',
+   'entities': {'urls': [{'display_url': 'example.com/xyz',
+                          'expanded_url': 'http://example.com/xyz',
+                          'url': 'http://t.co/AhhEkuxo'},
+                         ]},
+   'from_user': 'snarfed',
+   'from_user_name': 'Ryan Barrett',
+   'text': 'moire patterns: the new look for spring.',
+   'in_reply_to_status_id': 456,
+   },
+  # two embedded urls, only one for example.com, one reply (below)
+  {'id': 1,
+   'created_at': 'Wed, 04 Jan 2012 20:10:28 +0000',
+   'entities': {'urls': [{'display_url': 'bar.org/qwert',
+                          'expanded_url': 'http://bar.org/qwert',
+                          'url': 'http://t.co/ZhhEkuxo'},
+                         {'display_url': 'example.com/asdf',
+                          'url': 'http://example.com/asdf'},
+                         ]},
+   'from_user': 'user1',
+   'from_user_name': 'user 1 name',
+   'text': 'this is a tweet',
+   },
+
+  # no embedded urls
+  {'id': 2,
+   'created_at': 'Tue, 03 Jan 2012 16:17:16 +0000',
+   'entities': {},
+   'from_user': 'user2',
+   'from_user_name': 'user 2 name',
+   'text': 'this is also a tweet',
+   },
+  ]
+
+MENTIONS_JSON = [
+  # not a reply
+  {'created_at': 'Sun, 01 Jan 2012 11:44:57 +0000',
+   'entities': {'user_mentions': [{'id': 1, 'screen_name': 'user1'}]},
+   'from_user': 'user4',
+   'from_user_name': 'user 4 name',
+   'id': 4,
+   'text': 'boring',
+   },
+  # reply to tweet id 1 (above)
+  {'created_at': 'Sun, 01 Jan 1970 00:00:01 +0000',
+   'entities': {'user_mentions': [{'id': 1, 'screen_name': 'user1'}]},
+   'from_user': 'user3',
+   'from_user_name': 'user 3 name',
+   'id': 3,
+   'in_reply_to_status_id': 1,
+   # note the @ mention and hashtag for testing TwitterSearch.linkify()
+   'text': '@user1 i hereby #reply',
+   'to_user': 'user1',
+   },
+  ]
+
+TWEETS_SALMON_VARS = [
+  {'id': 'tag:twitter.com,2012:0',
+   'author_name': 'Ryan Barrett',
+   'author_uri': 'acct:snarfed@twitter-webfinger.appspot.com',
+   'in_reply_to': 'http://example.com/xyz',
+   'content': 'moire patterns: the new look for spring.',
+   'title': 'moire patterns: the new look for spring.',
+    'updated': 'Mon, 21 May 2012 02:25:25 +0000',
+   },
+  {'id': 'tag:twitter.com,2012:1',
+   'author_name': 'user 1 name',
+   'author_uri': 'acct:user1@twitter-webfinger.appspot.com',
+   'in_reply_to': 'http://example.com/asdf',
+   'content': 'this is a tweet',
+   'title': 'this is a tweet',
+    'updated': 'Wed, 04 Jan 2012 20:10:28 +0000',
+   },
+  {'id': 'tag:twitter.com,2012:3',
+   'author_name': 'user 3 name',
+   'author_uri': 'acct:user3@twitter-webfinger.appspot.com',
+   'in_reply_to': 'http://example.com/asdf',
+   'content': '@user1 i hereby #reply',
+   'title': '@user1 i hereby #reply',
+   'updated': 'Sun, 01 Jan 1970 00:00:01 +0000',
+   },
+  ]
 
 
 class TwitterSearchTest(testutil.HandlerTest):
@@ -44,25 +109,36 @@ class TwitterSearchTest(testutil.HandlerTest):
     self.twitter = TwitterSearch(key_name='example.com')
     self.datastore_stub = self.testbed.get_stub('datastore_v3')
 
-  def test_tweet_to_salmon(self):
-    self.assert_equals(SALMON_VARS, self.twitter.tweet_to_salmon_vars(TWEET_JSON))
+  def test_tweet_to_salmon_with_expanded_url(self):
+    self.assert_equals(TWEETS_SALMON_VARS[0],
+                       self.twitter.tweet_to_salmon_vars(TWEETS_JSON[0]))
+
+  def test_tweet_to_salmon_with_url(self):
+    self.assert_equals(TWEETS_SALMON_VARS[1],
+                       self.twitter.tweet_to_salmon_vars(TWEETS_JSON[1]))
 
   def test_tweet_to_salmon_minimal(self):
     salmon = self.twitter.tweet_to_salmon_vars({'id': 123})
-    self.assert_equals('tag:twitter.com,2012:123', salmon['id_tag'])
-
-  def test_tweet_to_salmon_multiple_urls(self):
-    tweet = copy.deepcopy(TWEET_JSON)
-    tweet['entities']['urls'].insert(0, {'expanded_url': 'http://foo.com/bar'})
-    self.assert_equals(SALMON_VARS, self.twitter.tweet_to_salmon_vars(TWEET_JSON))
+    self.assert_equals('tag:twitter.com,2012:123', salmon['id'])
 
   def test_tweet_to_salmon_no_matching_url(self):
-    tweet = copy.deepcopy(TWEET_JSON)
+    tweet = copy.deepcopy(TWEETS_JSON[0])
     tweet['entities']['urls'][0]['expanded_url'] = 'http://foo.com/bar'
 
-    expected = copy.deepcopy(SALMON_VARS)
-    expected['in_reply_to_tag'] = ''
+    expected = copy.deepcopy(TWEETS_SALMON_VARS[0])
+    expected['in_reply_to'] = None
     self.assert_equals(expected, self.twitter.tweet_to_salmon_vars(tweet))
+
+  def test_get_salmon(self):
+    self.expect_urlfetch(twitter.API_SEARCH_URL % 'example.com',
+                         json.dumps({'results': TWEETS_JSON}))
+    self.expect_urlfetch(twitter.API_SEARCH_URL % '@snarfed',
+                         json.dumps({'results': []}))
+    self.expect_urlfetch(twitter.API_SEARCH_URL % '@user1',
+                         json.dumps({'results': MENTIONS_JSON}))
+    self.mox.ReplayAll()
+
+    self.assert_equals(TWEETS_SALMON_VARS, self.twitter.get_salmon())
 
   def test_add_good_domain(self):
     for domain in 'asdf.com', 'https://asdf.com/', 'asdf.com/foo?bar#baz':
