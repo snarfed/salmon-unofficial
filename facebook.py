@@ -47,6 +47,7 @@ GET_ACCESS_TOKEN_URL = '&'.join((
     ))
 
 API_USER_URL = 'https://graph.facebook.com/%(id)s?access_token=%(access_token)s'
+API_LINKS_URL = 'https://graph.facebook.com/%(id)s/links?access_token=%(access_token)s'
 
 
 class Facebook(models.Source):
@@ -88,34 +89,44 @@ class Facebook(models.Source):
       picture='https://graph.facebook.com/%s/picture?type=small' % id,
       url='http://facebook.com/%s' % id)
 
-  def comment_to_salmon_vars(self, comment):
-    """Extracts Salmon template vars from a JSON Facebook comment.
+  def post_and_comments_to_salmon_vars(self, post):
+    """Converts a JSON Facebook post and comments to Salmon template vars.
 
     Args:
-      comment: JSON dict
+      post: JSON post dict. may include comments
+
+    Returns: list of dicts of template vars for ATOM_SALMON_TEMPLATE
+    """
+    post_vars = self.post_to_salmon_vars(post)
+    salmon = [post_vars]
+
+    for comment in post.get('comments', {}).get('data', []):
+      comment_vars = self.post_to_salmon_vars(comment)
+      comment_vars['in_reply_to_tag'] = post_vars['in_reply_to_tag']
+      # TODO: consider adding another in_reply_to_tag that refers to the parent
+      # post. i'd need to add a conditional to the template to include that
+      # second tag if and only if it's provided, though, which is annoying.
+      salmon.append(comment_vars)
+
+    return salmon
+
+  def post_to_salmon_vars(self, post):
+    """Extracts Salmon template vars from a JSON Facebook post or comment.
+
+    Args:
+      post: JSON dict
 
     Returns: dict of template vars for ATOM_SALMON_TEMPLATE
-
-    Raises:
-      ValueError if comment['id'] cannot be parsed. It should be of the form
-      PARENT_COMMENT
     """
-    id = comment.get('id', '')
-    parent_id, _, cmt_id = id.partition('_')
-    if not parent_id or not cmt_id:
-      raise ValueError('Could not parse comment id: %s' % id)
-
-    cmt_from = comment.get('from', {})
-
+    post_from = post.get('from', {})
     return {
-      'id_tag': util.tag_uri(self.DOMAIN, id),
-      'author_name': cmt_from.get('name'),
-      'author_uri': 'acct:%s@facebook-webfinger.appspot.com' % cmt_from.get('id'),
-      # TODO: this should be the original domain link
-      'in_reply_to_tag': util.tag_uri(self.DOMAIN, parent_id),
-      'content': comment.get('message'),
-      'title': comment.get('message'),
-      'updated': comment.get('created_time'),
+      'id_tag': util.tag_uri(self.DOMAIN, post.get('id')),
+      'author_name': post_from.get('name'),
+      'author_uri': 'acct:%s@facebook-webfinger.appspot.com' % post_from.get('id'),
+      'in_reply_to_tag': post.get('link'),
+      'content': post.get('message'),
+      'title': post.get('message'),
+      'updated': post.get('created_time'),
       }
 
 
