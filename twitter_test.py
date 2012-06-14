@@ -81,7 +81,7 @@ TWEETS_SALMON_VARS = [
    'in_reply_to': 'http://example.com/xyz',
    'content': 'moire patterns: the new look for spring.',
    'title': 'moire patterns: the new look for spring.',
-    'updated': 'Mon, 21 May 2012 02:25:25 +0000',
+   'updated': '2012-05-21T02:25:25',
    },
   {'id': 'tag:twitter.com,2012:1',
    'author_name': 'user 1 name',
@@ -89,7 +89,7 @@ TWEETS_SALMON_VARS = [
    'in_reply_to': 'http://example.com/asdf',
    'content': 'this is a tweet',
    'title': 'this is a tweet',
-    'updated': 'Wed, 04 Jan 2012 20:10:28 +0000',
+    'updated': '2012-01-04T20:10:28',
    },
   {'id': 'tag:twitter.com,2012:3',
    'author_name': 'user 3 name',
@@ -97,7 +97,7 @@ TWEETS_SALMON_VARS = [
    'in_reply_to': 'http://example.com/asdf',
    'content': '@user1 i hereby #reply',
    'title': '@user1 i hereby #reply',
-   'updated': 'Sun, 01 Jan 1970 00:00:01 +0000',
+   'updated': '1970-01-01T00:00:01',
    },
   ]
 

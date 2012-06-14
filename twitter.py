@@ -8,6 +8,7 @@ pprint.pprint(json.loads(urllib.urlopen(
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
+import datetime
 import json
 import logging
 import re
@@ -75,6 +76,16 @@ class TwitterSearch(models.Source):
       if url and urlparse.urlparse(url).netloc == self.key().name():
         link = url
 
+    # parse the timestamp, formatted e.g. 'Sun, 01 Jan 2012 11:44:57 +0000'
+    created_at = tweet.get('created_at')
+    if created_at:
+      created_at = re.sub(' \+[0-9]{4}$', '', created_at)
+      updated = datetime.datetime.strptime(created_at,
+                                           '%a, %d %b %Y %H:%M:%S')
+      updated = updated.isoformat()
+    else:
+      updated = ''
+
     return {
       'id': util.tag_uri(self.DOMAIN, str(tweet.get('id'))),
       'author_name': tweet.get('from_user_name'),
@@ -82,8 +93,7 @@ class TwitterSearch(models.Source):
       'in_reply_to': link,
       'content': tweet.get('text'),
       'title': tweet.get('text'),
-      # TODO: use rfc2822_to_iso8601() from activitystreams-unofficial/twitter.py
-      'updated': tweet.get('created_at'),
+      'updated': updated,
       }
 
   @staticmethod
