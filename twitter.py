@@ -52,22 +52,23 @@ class TwitterSearch(models.Source):
 
     Returns: dict of template vars for ATOM_SALMON_TEMPLATE
     """
+    # there might be more than one URL in the tweet. find the one on our domain.
+    link = ''
+    for url in tweet.get('entities', {}).get('urls', []):
+      expanded = url['expanded_url']
+      if urlparse.urlparse(expanded).netloc == self.key().name():
+        link = expanded
+
     vars = {
       'id_tag': util.tag_uri(self.DOMAIN, str(tweet.get('id'))),
       'author_name': tweet.get('from_user_name'),
       'author_uri': 'acct:%s@twitter-webfinger.appspot.com' % tweet.get('from_user'),
-      # TODO: this should be the original domain link
-      'in_reply_to_tag': util.tag_uri(self.DOMAIN, tweet.get('in_reply_to_status_id')),
+      'in_reply_to_tag': link,
       'content': tweet.get('text'),
       'title': tweet.get('text'),
       # TODO: use rfc2822_to_iso8601() from activitystreams-unofficial/twitter.py
       'updated': tweet.get('created_at'),
       }
-
-    parent_id = tweet.get('in_reply_to_status_id')
-    if parent_id:
-      # TODO: this should be the original domain link
-      vars['in_reply_to_tag'] = util.tag_uri(self.DOMAIN, parent_id)
 
     return vars
 

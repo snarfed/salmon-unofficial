@@ -4,6 +4,8 @@
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
+import copy
+
 import twitter
 from twitter import TwitterSearch
 from webutil import testutil
@@ -28,8 +30,7 @@ SALMON_VARS = {
   'id_tag': 'tag:twitter.com,2012:123',
   'author_name': 'Ryan Barrett',
   'author_uri': 'acct:snarfed@twitter-webfinger.appspot.com',
-  # TODO: this should be the original domain link
-  'in_reply_to_tag': 'tag:twitter.com,2012:456',
+  'in_reply_to_tag': 'http://example.com/xyz',
   'content': 'moire patterns: the new look for spring.',
   'title': 'moire patterns: the new look for spring.',
   'updated': 'Mon, 21 May 2012 02:25:25 +0000',
@@ -40,7 +41,7 @@ class TwitterSearchTest(testutil.HandlerTest):
 
   def setUp(self):
     super(TwitterSearchTest, self).setUp()
-    self.twitter = TwitterSearch(key_name='x')
+    self.twitter = TwitterSearch(key_name='example.com')
     self.datastore_stub = self.testbed.get_stub('datastore_v3')
 
   def test_tweet_to_salmon(self):
@@ -49,6 +50,19 @@ class TwitterSearchTest(testutil.HandlerTest):
   def test_tweet_to_salmon_minimal(self):
     salmon = self.twitter.tweet_to_salmon_vars({'id': 123})
     self.assert_equals('tag:twitter.com,2012:123', salmon['id_tag'])
+
+  def test_tweet_to_salmon_multiple_urls(self):
+    tweet = copy.deepcopy(TWEET_JSON)
+    tweet['entities']['urls'].insert(0, {'expanded_url': 'http://foo.com/bar'})
+    self.assert_equals(SALMON_VARS, self.twitter.tweet_to_salmon_vars(TWEET_JSON))
+
+  def test_tweet_to_salmon_no_matching_url(self):
+    tweet = copy.deepcopy(TWEET_JSON)
+    tweet['entities']['urls'][0]['expanded_url'] = 'http://foo.com/bar'
+
+    expected = copy.deepcopy(SALMON_VARS)
+    expected['in_reply_to_tag'] = ''
+    self.assert_equals(expected, self.twitter.tweet_to_salmon_vars(tweet))
 
   def test_add_good_domain(self):
     for domain in 'asdf.com', 'https://asdf.com/', 'asdf.com/foo?bar#baz':
