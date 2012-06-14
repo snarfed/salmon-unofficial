@@ -14,6 +14,69 @@ import facebook
 from webutil import testutil
 from webutil import webapp2
 
+# test data
+LINK_AND_COMMENTS_JSON = {
+  'id': '309194992492775',
+  'from': {
+    'name': 'Ryan Barrett',
+    'id': '212038',
+    },
+  'message': 'Hey managers, remember back before you were a manager?',
+  'link': 'http://snarfed.org/2012-05-13_how_can_we_motivate_managers',
+  'name': 'How can we motivate managers?',
+  'created_time': '2012-05-14T05:40:23+0000',
+  'comments': {'data': [
+      {
+        'id': '309194992492775_1975744',
+        'from': {
+          'name': 'Alice',
+          'id': '123',
+          },
+        'message': 'foo',
+        'created_time': '2012-05-14T05:54:48+0000',
+        },
+      {
+        'id': '309194992492775_1975797',
+        'from': {
+          'name': 'Bob',
+          'id': '456',
+          },
+        'message': 'bar',
+        'created_time': '2012-05-14T06:15:51+0000',
+        },
+      ]},
+  }
+
+LINK_AND_COMMENTS_SALMON_VARS = [
+  {
+    'id_tag': 'tag:facebook.com,2012:309194992492775',
+    'author_name': 'Ryan Barrett',
+    'author_uri': 'acct:212038@facebook-webfinger.appspot.com',
+    'in_reply_to_tag': 'http://snarfed.org/2012-05-13_how_can_we_motivate_managers',
+    'content': 'Hey managers, remember back before you were a manager?',
+    'title': 'Hey managers, remember back before you were a manager?',
+    'updated': '2012-05-14T05:40:23+0000',
+    },
+  {
+    'id_tag': 'tag:facebook.com,2012:309194992492775_1975744',
+    'author_name': 'Alice',
+    'author_uri': 'acct:123@facebook-webfinger.appspot.com',
+    'in_reply_to_tag': 'http://snarfed.org/2012-05-13_how_can_we_motivate_managers',
+    'content': 'foo',
+    'title': 'foo',
+    'updated': '2012-05-14T05:54:48+0000',
+    },
+  {
+    'id_tag': 'tag:facebook.com,2012:309194992492775_1975797',
+    'author_name': 'Bob',
+    'author_uri': 'acct:456@facebook-webfinger.appspot.com',
+    'in_reply_to_tag': 'http://snarfed.org/2012-05-13_how_can_we_motivate_managers',
+    'content': 'bar',
+    'title': 'bar',
+    'updated': '2012-05-14T06:15:51+0000',
+    },
+  ]
+
 
 class FacebookTest(testutil.HandlerTest):
 
@@ -48,67 +111,20 @@ class FacebookTest(testutil.HandlerTest):
     salmon = self.facebook.post_to_salmon_vars({'id': '123_456'})
     self.assert_equals('tag:facebook.com,2012:123_456', salmon['id_tag'])
 
-  def test_post_and_commentsto_salmon_vars(self):
-    self.assert_equals([
-        {
-          'id_tag': 'tag:facebook.com,2012:309194992492775',
-          'author_name': 'Ryan Barrett',
-          'author_uri': 'acct:212038@facebook-webfinger.appspot.com',
-          'in_reply_to_tag': 'http://snarfed.org/2012-05-13_how_can_we_motivate_managers',
-          'content': 'Hey managers, remember back before you were a manager?',
-          'title': 'Hey managers, remember back before you were a manager?',
-          'updated': '2012-05-14T05:40:23+0000',
-          },
-        {
-          'id_tag': 'tag:facebook.com,2012:309194992492775_1975744',
-          'author_name': 'Alice',
-          'author_uri': 'acct:123@facebook-webfinger.appspot.com',
-          'in_reply_to_tag': 'http://snarfed.org/2012-05-13_how_can_we_motivate_managers',
-          'content': 'foo',
-          'title': 'foo',
-          'updated': '2012-05-14T05:54:48+0000',
-          },
-        {
-          'id_tag': 'tag:facebook.com,2012:309194992492775_1975797',
-          'author_name': 'Bob',
-          'author_uri': 'acct:456@facebook-webfinger.appspot.com',
-          'in_reply_to_tag': 'http://snarfed.org/2012-05-13_how_can_we_motivate_managers',
-          'content': 'bar',
-          'title': 'bar',
-          'updated': '2012-05-14T06:15:51+0000',
-          },
-        ],
-      self.facebook.post_and_comments_to_salmon_vars({
-            'id': '309194992492775',
-            'from': {
-              'name': 'Ryan Barrett',
-              'id': '212038',
-              },
-            'message': 'Hey managers, remember back before you were a manager?',
-            'link': 'http://snarfed.org/2012-05-13_how_can_we_motivate_managers',
-            'name': 'How can we motivate managers?',
-            'created_time': '2012-05-14T05:40:23+0000',
-            'comments': {'data': [
-                {
-                  'id': '309194992492775_1975744',
-                  'from': {
-                    'name': 'Alice',
-                    'id': '123',
-                    },
-                  'message': 'foo',
-                  'created_time': '2012-05-14T05:54:48+0000',
-                  },
-                {
-                  'id': '309194992492775_1975797',
-                  'from': {
-                    'name': 'Bob',
-                    'id': '456',
-                    },
-                  'message': 'bar',
-                  'created_time': '2012-05-14T06:15:51+0000',
-                  },
-                ]},
-            }))
+  def test_post_and_comments_to_salmon_vars(self):
+    self.assert_equals(
+      LINK_AND_COMMENTS_SALMON_VARS,
+      self.facebook.post_and_comments_to_salmon_vars(LINK_AND_COMMENTS_JSON))
+
+  def test_get_salmon(self):
+    self.facebook.access_token = 'my_token'
+    self.expect_urlfetch(
+      'https://graph.facebook.com/x/links?access_token=my_token',
+      json.dumps({'data': [LINK_AND_COMMENTS_JSON, LINK_AND_COMMENTS_JSON]}))
+    self.mox.ReplayAll()
+
+    self.assert_equals(LINK_AND_COMMENTS_SALMON_VARS * 2,
+                       self.facebook.get_salmon())
 
   def test_new(self):
     self.expect_urlfetch('https://graph.facebook.com/me?access_token=my_token',

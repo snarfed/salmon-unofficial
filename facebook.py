@@ -4,6 +4,7 @@
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
+import itertools
 import json
 import logging
 import urllib
@@ -128,6 +129,14 @@ class Facebook(models.Source):
       'title': post.get('message'),
       'updated': post.get('created_time'),
       }
+
+  def get_salmon(self):
+    """Returns a list of Salmon entities for posts with links and their comments."""
+    resp = json.loads(util.urlfetch(
+        API_LINKS_URL % {'id': self.key().name(), 'access_token': self.access_token}))
+
+    return list(itertools.chain(*[self.post_and_comments_to_salmon_vars(post)
+                                  for post in resp['data']]))
 
 
 class AddFacebook(webapp2.RequestHandler):
