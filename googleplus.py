@@ -5,6 +5,7 @@
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
 import httplib2
+import logging
 import os
 import urlparse
 
@@ -146,6 +147,39 @@ class GooglePlus(models.Source):
       }
 
     return vars
+
+  def get_salmon(self):
+    """Returns a list of Salmon template var dicts for posts and their comments.
+
+    https://developers.google.com/+/api/latest/activies#resource
+    https://developers.google.com/+/api/latest/comments#resource
+    """
+    activities = GooglePlusService.call_with_creds(
+      self.owner.key().name(), 'activities.list', userId=self.key().name(),
+      collection='public', maxResults=100)
+    logging.debug('Received activities for user id %s:\n%s',
+                  self.key().name(), activities)
+
+    salmons = []
+
+    for activity in activities['items']:
+      salmon = self.activity_to_salmon_vars(activity)
+      salmons.append(salmon)
+
+      # only take activities with links
+      link = salmon['in_reply_to']
+      if not link:
+        continue
+
+      comments = GooglePlusService.call_with_creds(
+        self.owner.key().name(), 'comments.list', activityId=activity['id'],
+        maxResults=100)
+      for comment in comments['items']:
+        salmon = self.activity_to_salmon_vars(comment)
+        salmon['in_reply_to'] = link
+        salmons.append(salmon)
+
+    return salmons
 
 
 class AddGooglePlus(webapp2.RequestHandler):

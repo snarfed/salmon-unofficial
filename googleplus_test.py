@@ -4,6 +4,9 @@
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
+import copy
+
+import models
 from googleplus import GooglePlus, GooglePlusService
 from webutil import testutil
 
@@ -54,7 +57,7 @@ COMMENT_SALMON_VARS = {
   'id': 'tag:plus.google.com,2012:ccg0o1_OvkYgU_fVvw5-gO2rdf3',
   'author_name': 'fred',
   'author_uri': 'acct:222@gmail.com',
-  'in_reply_to': None,
+  'in_reply_to': 'http://foo/bar',
   'content': 'i agree',
   'title': 'i agree',
   'updated': '2012-06-03T05:33:10.789Z',
@@ -79,8 +82,25 @@ class GooglePlusTest(testutil.HandlerTest):
     self.assert_equals('tag:plus.google.com,2012:123', salmon['id'])
 
   def test_comment_to_salmon_vars(self):
-    self.assert_equals(COMMENT_SALMON_VARS,
+    expected = copy.deepcopy(COMMENT_SALMON_VARS)
+    expected['in_reply_to'] = None
+    self.assert_equals(expected,
                        self.googleplus.activity_to_salmon_vars(COMMENT_JSON))
+
+  def test_get_salmon(self):
+    GooglePlusService.call_with_creds('my gae user id', 'activities.list',
+                                      userId='x', collection='public',
+                                      maxResults=100)\
+        .AndReturn({'items': [ACTIVITY_JSON]})
+    GooglePlusService.call_with_creds('my gae user id', 'comments.list',
+                                      activityId='123', maxResults=100)\
+        .AndReturn({'items': [COMMENT_JSON]})
+    self.mox.ReplayAll()
+
+    self.googleplus.owner = models.User(key_name='my gae user id')
+    self.assert_equals([ACTIVITY_SALMON_VARS, COMMENT_SALMON_VARS],
+                       self.googleplus.get_salmon())
+
 
   def test_new(self):
     GooglePlusService.call('http placeholder', 'people.get', userId='me')\
