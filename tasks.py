@@ -11,6 +11,7 @@ __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
 import datetime
 import itertools
+import json
 import logging
 import re
 import time
@@ -20,6 +21,7 @@ from webob import exc
 import facebook
 from models import Source
 import googleplus
+import salmon
 import twitter
 from webutil import webapp2
 
@@ -82,9 +84,9 @@ class Poll(webapp2.RequestHandler):
       return
 
     logging.debug('Polling %s source %s', source.kind(), source.key().name())
-    for salmon in source.get_salmon():
-      logging.debug('Got salmon %r', salmon)
-      salmon.get_or_save()
+    for vars in source.get_salmon():
+      logging.debug('Got salmon %r', vars)
+      salmon.Salmon(key_name=vars['id'], vars=json.dumps(vars)).get_or_save()
 
     source.last_polled = NOW_FN()
     source.add_poll_task(countdown=self.TASK_COUNTDOWN.seconds)

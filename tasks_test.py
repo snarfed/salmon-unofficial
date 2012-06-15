@@ -5,6 +5,7 @@
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
 import datetime
+import json
 import mox
 import urlparse
 from webob import exc
@@ -36,7 +37,8 @@ class TaskQueueTest(testutil.HandlerTest):
   def setUp(self):
     super(TaskQueueTest, self).setUp()
     tasks.NOW_FN = lambda: self.now
-    self.salmon = Salmon(key_name='my_salmon')
+    self.salmon_vars = {'id': 'tag:foo'}
+    self.salmon = Salmon(key_name='tag:foo', vars=json.dumps(self.salmon_vars))
 
   def post_task(self, expected_status=200):
     """Runs post() and checks the response status code."""
@@ -53,7 +55,7 @@ class PollTest(TaskQueueTest):
     super(PollTest, self).setUp()
     self.source = FakeSource.new(self.handler)
     self.source.save()
-    self.source.set_salmon([self.salmon])
+    self.source.set_salmon([self.salmon_vars])
     self.task_params = {'source_key': self.source.key(),
                         'last_polled': '1970-01-01-00-00-00'}
 

@@ -28,7 +28,7 @@ class FakeSource(FakeBase, models.Source):
   """A fake Source class.
 
   Class attributes:
-    salmon: dict mapping FakeSource string key to list of Salmon to be
+    salmon: dict mapping FakeSource string key to list of dicts to be
       returned by poll(). Can't just store in an instance attribute because
       tasks.py code loads entities from the datastore.
   """

@@ -114,3 +114,5 @@ class SalmonTest(testutil.HandlerTest):
         .replace('>', '>\n').replace('</', '\n</')
     self.assert_multiline_equals(ENVELOPE_XML, envelope)
 
+  def test_send_slap(self):
+    pass

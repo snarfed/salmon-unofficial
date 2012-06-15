@@ -41,7 +41,10 @@ class User(util.KeyNameModel, util.SingleEGModel):
     Args:
       handler: the current webapp.RequestHandler
     """
-    return User.get_or_insert(key_name=cls._current_user_key_name())
+    key_name = cls._current_user_key_name()
+    if key_name:
+      return User.get_or_insert(key_name=key_name,
+                                parent=User.shared_parent_key())
 
   @staticmethod
   def _current_user_key_name():
@@ -112,13 +115,10 @@ class Source(util.KeyNameModel, util.SingleEGModel):
     """
     raise NotImplementedError()
 
-  def get_posts(self):
-    """Returns a list of the most recent posts from this source.
+  def get_salmon(self):
+    """Returns a list of Salmon template var dicts for posts and their comments.
  
     To be implemented by subclasses.
-
-    Returns: list of (post, url), where post is any object and url is the string
-      url for the post
     """
     raise NotImplementedError()
 

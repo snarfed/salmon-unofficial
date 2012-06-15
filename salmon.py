@@ -63,8 +63,8 @@ class Salmon(util.KeyNameModel):
     return self
 
   def send_slap(self):
-    # TODO
-    pass
+    util.urlfetch(salmon.endpoint, method='POST', payload=self.envelope(),
+                  headers={'Content-Type': 'application/magic-envelope+xml'})
 
   def envelope(self, author_uri):
     """Signs and encloses an Atom Salmon in a Magic Signature envelope.
