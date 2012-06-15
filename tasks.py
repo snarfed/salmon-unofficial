@@ -3,7 +3,7 @@
 TODO: cron job to find sources without seed poll tasks.
 TODO: think about how to determine stopping point. can all sources return
 salmons in strict descending timestamp order? can we require/generate
-monotonically increasing salmon ids for all sources? 
+monotonically increasing salmon ids for all sources?
 TODO: check HRD consistency guarantees and change as needed
 """
 

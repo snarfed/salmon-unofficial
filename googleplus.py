@@ -139,7 +139,6 @@ class GooglePlus(models.Source):
       'id': util.tag_uri(self.DOMAIN, activity.get('id')),
       'author_name': actor.get('displayName'),
       'author_uri': 'acct:%s@gmail.com' % actor.get('id'),
-      # TODO: this should be the original domain link
       'in_reply_to': link,
       'content': content,
       'title': title if title else content,

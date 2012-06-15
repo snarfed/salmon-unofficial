@@ -32,8 +32,6 @@ class User(util.KeyNameModel, util.SingleEGModel):
       return cls.get_by_key_name(key_name)
 
   @classmethod
-  @db.transactional
-  # TODO: switch to plain get_or_insert()
   def get_or_insert_current_user(cls, handler):
     """Returns the logged in user's User instance, creating it if necessary.
 
@@ -43,21 +41,14 @@ class User(util.KeyNameModel, util.SingleEGModel):
     Args:
       handler: the current webapp.RequestHandler
     """
-    key_name = cls._current_user_key_name()
-    if key_name:
-      user = cls.get_by_key_name(key_name)
-      if not user:
-        user = cls(key_name=key_name)
-        user.save()
-
-      return user
+    return User.get_or_insert(key_name=cls._current_user_key_name())
 
   @staticmethod
   def _current_user_key_name():
     """Returns a unique key name for the current user.
 
     Returns: the user's OpenId identifier or App Engine user id or None if
-      they're not logged in, 
+      they're not logged in.
     """
     user = users.get_current_user()
     if user:
