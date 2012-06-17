@@ -3,11 +3,14 @@
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
+import appengine_config
 import datetime
+import feedparser
 import logging
 import json
-import appengine_config
+import urlparse
 from webutil import util
+
 import django_salmon
 from django_salmon import magicsigs
 from django_salmon import utils
@@ -15,6 +18,7 @@ from django_salmon import utils
 from google.appengine.api import taskqueue
 from google.appengine.ext import db
 
+FEED_MIME_TYPES = ('application/rss+xml', 'application/atom+xml')
 
 # temporary URL for fetching magic sig private keys from webfinger-unofficial
 USER_KEY_HANDLER = \
@@ -64,7 +68,22 @@ class Salmon(util.KeyNameModel):
     return self
 
   def send_slap(self):
-    django_salmon.discover_salmon_endpoint('asdf')
+    url = json.loads(self.vars)['in_reply_to']
+
+    # TODO(paulosman)
+    # really crappy HTTP client right now. Can improve when the basic
+    # protocol flow is working.
+    headers = {
+        'Content-Type': 'application/magic-envelope+xml',
+    }
+    req = urllib2.Request(sub.salmon_endpoint, magic_envelope, headers)
+    try:
+        response = urllib2.urlopen(req)
+        print response.read()
+    except urllib2.HTTPError, e:
+        print repr(e)
+        print e.read()
+
     util.urlfetch(salmon.endpoint, method='POST', payload=self.envelope(),
                   headers={'Content-Type': 'application/magic-envelope+xml'})
 
@@ -89,3 +108,37 @@ class Salmon(util.KeyNameModel):
     key = UserKey(**json.loads(util.urlfetch(key_url)))
     return magicsigs.magic_envelope(ATOM_SALMON_TEMPLATE % json.loads(self.vars),
                                     'application/atom+xml', key)
+
+
+def discover_salmon_endpoint(url):
+  """Discovers and returns the Salmon endpoint URL for a post URL.
+
+  Args:
+    url: string URL
+
+  Returns: string URL or None
+  """
+  body = util.urlfetch(url)
+
+  # first look in the document itself
+  endpoint = django_salmon.discover_salmon_endpoint(body)
+  if endpoint:
+    return endpoint
+
+  # next look in its feed, if any
+  #
+  # background on feed autodiscovery:
+  # http://blog.whatwg.org/feed-autodiscovery
+  parsed = feedparser.parse(body)
+  for link in parsed.feed.get('links', []):
+    rels = link.get('rel').split()
+    href = link.get('href')
+    if href and ('feed' in rels or 'alternate' in rels):
+      endpoint = django_salmon.discover_salmon_endpoint(util.urlfetch(href))
+      if endpoint:
+        return endpoint
+
+  # finally, look in /.well-known/host-meta
+  host_meta_url = 'http://%s/.well-known/host-meta' % util.domain_from_link(url)
+  return django_salmon.discover_salmon_endpoint(util.urlfetch(host_meta_url))
+

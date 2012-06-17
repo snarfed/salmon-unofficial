@@ -8,7 +8,7 @@ import json
 import mox
 
 import appengine_config
-from salmon import Salmon
+import salmon
 from webutil import testutil
 
 
@@ -16,7 +16,7 @@ SALMON_VARS = {
   'id': 'tag:facebook.com,2012:10102828452385634_39170557',
   'author_name': 'Ryan Barrett',
   'author_uri': 'acct:212038@facebook-webfinger.appspot.com',
-  # TODO: this should be the original domain link
+  # this would normally be the original blog post
   'in_reply_to': 'tag:facebook.com,2012:10102828452385634',
   'content': 'moire patterns: the new look for spring.',
   'title': 'moire patterns: the new look for spring.',
@@ -82,11 +82,11 @@ class SalmonTest(testutil.HandlerTest):
 
   def setUp(self):
     super(SalmonTest, self).setUp()
-    self.salmon = Salmon(key_name='tag:xyz', vars=json.dumps(SALMON_VARS))
+    self.salmon = salmon.Salmon(key_name='tag:xyz', vars=json.dumps(SALMON_VARS))
     appengine_config.USER_KEY_HANDLER_SECRET = 'my_secret'
 
   def test_get_or_save(self):
-    self.assertEqual(0, Salmon.all().count())
+    self.assertEqual(0, salmon.Salmon.all().count())
     self.assertEqual(0, len(self.taskqueue_stub.GetTasks('propagate')))
 
     # new. should add a propagate task.
@@ -115,4 +115,55 @@ class SalmonTest(testutil.HandlerTest):
     self.assert_multiline_equals(ENVELOPE_XML, envelope)
 
   def test_send_slap(self):
-    self.salmon.send_slap()
+    vars = dict(SALMON_VARS)
+    vars['in_reply_to'] = 'http://my.blog/post'
+    self.salmon.vars = json.dumps(vars)
+
+    # self.expect_urlfetch('http://my.blog/post', 'x')
+                         
+    # self.salmon.send_slap()
+
+  def test_discover_salmon_endpoint__found_in_html(self):
+    self.expect_urlfetch(
+      'my.blog/post',
+      '<html><head><link rel="salmon" href="my endpoint" /></head></html>')
+    self.mox.ReplayAll()
+
+    self.assertEquals('my endpoint',
+                      salmon.discover_salmon_endpoint('my.blog/post'))
+
+  def test_discover_salmon_endpoint__found_in_feed(self):
+    self.expect_urlfetch('my.blog/post', """
+<html><head>
+<link rel="foo alternate" type="application/rss+xml" href="my.blog/feed" />
+</head></html>""")
+    self.expect_urlfetch('my.blog/feed', """
+<rss><channel>
+<link rel="salmon" href="my endpoint" type="" />
+</channel></rss>""")
+    self.mox.ReplayAll()
+
+    self.assertEquals('my endpoint',
+                      salmon.discover_salmon_endpoint('my.blog/post'))
+
+  def test_discover_salmon_endpoint__found_in_hostmeta(self):
+    self.expect_urlfetch('my.blog/post', '<html></html>')
+    self.expect_urlfetch(
+      'http://my.blog/.well-known/host-meta',
+      '<XRD><Link rel="salmon" href="my endpoint"></Link></XRD>')
+    self.mox.ReplayAll()
+
+    self.assertEquals('my endpoint',
+                      salmon.discover_salmon_endpoint('my.blog/post'))
+
+
+  def test_discover_salmon_endpoint__not_found(self):
+    self.expect_urlfetch('my.blog/post', """
+<html><head>
+<link rel="foo alternate" type="application/rss+xml" href="my.blog/feed" />
+</head></html>""")
+    self.expect_urlfetch('my.blog/feed', '<rss><channel></channel></rss>')
+    self.expect_urlfetch('http://my.blog/.well-known/host-meta', '<XRD></XRD>')
+    self.mox.ReplayAll()
+
+    self.assertEquals(None, salmon.discover_salmon_endpoint('my.blog/post'))
