@@ -6,6 +6,7 @@ __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
 import json
 import mox
+from webob import exc
 
 import appengine_config
 import salmon
@@ -130,6 +131,27 @@ class SalmonTest(testutil.HandlerTest):
     self.mox.StubOutWithMock(salmon, 'discover_salmon_endpoint')
     salmon.discover_salmon_endpoint(SALMON_VARS['in_reply_to']).AndReturn(None)
     # expect no urlfetch to send the slap
+    self.mox.ReplayAll()
+
+    self.salmon.send_slap()
+
+  def test_send_slap__error_discovering_endpoint(self):
+    self.mox.StubOutWithMock(salmon, 'discover_salmon_endpoint')
+    salmon.discover_salmon_endpoint(SALMON_VARS['in_reply_to'])\
+        .AndRaise(exc.HTTPNotFound())
+    # expect no urlfetch to send the slap
+    self.mox.ReplayAll()
+
+    self.salmon.send_slap()
+
+  def test_send_slap__error_sending(self):
+    self.mox.StubOutWithMock(salmon, 'discover_salmon_endpoint')
+    salmon.discover_salmon_endpoint(SALMON_VARS['in_reply_to'])\
+        .AndReturn('http://my/endpoint')
+    self.expect_urlfetch(USER_KEY_URL, json.dumps(USER_KEY_JSON))
+    self.expect_urlfetch('http://my/endpoint', 'response', method='POST',
+                         headers=salmon.SLAP_HTTP_HEADERS, payload=ENVELOPE_XML,
+                         status=404)
     self.mox.ReplayAll()
 
     self.salmon.send_slap()

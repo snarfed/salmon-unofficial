@@ -17,6 +17,7 @@ import feedparser
 import logging
 import json
 import urlparse
+from webob import exc
 from webutil import util
 
 import django_salmon
@@ -64,7 +65,7 @@ class Salmon(util.KeyNameModel):
 
   status = db.StringProperty(choices=STATUSES, default='new')
   leased_until = db.DateTimeProperty()
-  vars = db.StringProperty()
+  vars = db.TextProperty()
 
   @db.transactional
   def get_or_save(self):
@@ -83,11 +84,19 @@ class Salmon(util.KeyNameModel):
     url = vars['in_reply_to']
     logging.info('Trying to send slap:\n%r', vars)
 
-    endpoint = discover_salmon_endpoint(url)
+    try:
+      endpoint = discover_salmon_endpoint(url)
+    except exc.HTTPClientError, e:
+      logging.exception('Error discovering Salmon endpoint; giving up.')
+      return
+
     if endpoint:
-      resp = util.urlfetch(endpoint, method='POST',
-                           payload=self.envelope(), headers=SLAP_HTTP_HEADERS)
-      logging.info('Sent slap to %r. Response: %r', endpoint, resp)
+      try:
+        resp = util.urlfetch(endpoint, method='POST',
+                             payload=self.envelope(), headers=SLAP_HTTP_HEADERS)
+        logging.info('Sent slap to %r. Response: %r', endpoint, resp)
+      except exc.HTTPClientError, e:
+        logging.exception('Error sending slap; giving up.')
 
   def envelope(self):
     """Signs and encloses this salmon in a Magic Signature envelope.
