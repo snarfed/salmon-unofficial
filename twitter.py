@@ -150,29 +150,7 @@ class TwitterSearch(models.Source):
 
 class AddTwitterSearch(webapp2.RequestHandler):
   def post(self):
-    value = self.request.get('domain')
-    parsed = urlparse.urlparse(value)
-    if not parsed.netloc:
-      parsed = urlparse.urlparse('http://' + value)
-
-    domain = parsed.netloc
-    if not domain:
-      raise exc.HTTPBadRequest('No domain found in %r' % value)
-
-    # strip exactly one dot from the right, if present
-    if domain[-1:] == ".":
-      domain = domain[:-1] 
-
-    split = domain.split('.')
-    if len (split) <= 1:
-      raise exc.HTTPBadRequest('No TLD found in domain %r' % domain)
-
-    # http://stackoverflow.com/questions/2532053/validate-hostname-string-in-python
-    allowed = re.compile('(?!-)[A-Z\d-]{1,63}(?<!-)$', re.IGNORECASE)
-    for part in split:
-      if not allowed.match(part):
-        raise exc.HTTPBadRequest('Bad component in domain: %r' % part)
-
+    domain = util.domain_from_link(self.request.get('domain'))
     TwitterSearch.create_new(self, domain=domain).save()
     self.redirect('/')
 
