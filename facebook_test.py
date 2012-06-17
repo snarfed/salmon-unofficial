@@ -128,7 +128,7 @@ class FacebookTest(testutil.HandlerTest):
 
   def test_new(self):
     self.expect_urlfetch('https://graph.facebook.com/me?access_token=my_token',
-                         json.dumps({'id': '1', 'name': {'formatted': 'Mr. Foo'}}))
+                         json.dumps({'id': '1', 'name': 'Mr. Foo'}))
     self.mox.ReplayAll()
 
     self.handler.request = webapp2.Request.blank('?access_token=my_token')

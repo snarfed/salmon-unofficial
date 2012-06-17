@@ -86,7 +86,7 @@ class Facebook(models.Source):
       key_name=id,
       owner=models.User.get_or_insert_current_user(handler),
       access_token=access_token,
-      name=me.get('name', {}).get('formatted'),
+      name=me.get('name'),
       picture='https://graph.facebook.com/%s/picture?type=small' % id,
       url='http://facebook.com/%s' % id)
 

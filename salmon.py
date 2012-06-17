@@ -1,5 +1,13 @@
 #!/usr/bin/python
 """Salmon model class."""
+# STATE: need to do extra LRDD lookup for salmon link
+
+# curl http://identi.ca/.well-known/host-meta
+# <?xml version="1.0" encoding="UTF-8"?>
+# <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0"><hm:Host xmlns:hm="http://host-meta.net/xrd/1.0">identi.ca</hm:Host><Link rel="lrdd" template="http://identi.ca/main/xrd?uri={uri}"><Title>Resource Descriptor</Title></Link></XRD>laptop:~> curl 'http://identi.ca/main/xrd?uri=acct:forteller@identi.ca'
+# <?xml version="1.0" encoding="UTF-8"?>
+# <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0"><Subject>acct:forteller@identi.ca</Subject><Alias>http://identi.ca/user/9896</Alias><Alias>http://identi.ca/forteller</Alias><Link rel="http://webfinger.net/rel/profile-page" type="text/html" href="http://identi.ca/forteller"></Link><Link rel="http://gmpg.org/xfn/11" type="text/html" href="http://identi.ca/forteller"></Link><Link rel="describedby" type="application/rdf+xml" href="http://identi.ca/forteller/foaf"></Link><Link rel="http://apinamespace.org/atom" type="application/atomsvc+xml" href="http://identi.ca/api/statusnet/app/service/forteller.xml"><Property type="http://apinamespace.org/atom/username">forteller</Property></Link><Link rel="http://apinamespace.org/twitter" href="https://identi.ca/api/"><Property type="http://apinamespace.org/twitter/username">forteller</Property></Link><Link rel="http://schemas.google.com/g/2010#updates-from" href="http://identi.ca/api/statuses/user_timeline/9896.atom" type="application/atom+xml"></Link><Link rel="salmon" href="http://identi.ca/main/salmon/user/9896"></Link><Link rel="http://salmon-protocol.org/ns/salmon-replies" href="http://identi.ca/main/salmon/user/9896"></Link><Link rel="http://salmon-protocol.org/ns/salmon-mention" href="http://identi.ca/main/salmon/user/9896"></Link><Link rel="magic-public-key" href="data:application/magic-public-key,RSA.ohR-_jdQ5yQeGPBzTPysQvTav93FL-P_5yVfvJl1sUQBdRA7dFZpqR83vJOnsgHbO3KEo8yKadWNCrS6A-IJZn2tHrxHTJ1lasXGkNxGQuIKt3hsZXsEvChqNZrq8cqDXXOl6vMCWccBVO1w6HCXHtfgZRhrC6tbDUtXlhHd_O0=.AQAB"></Link><Link rel="http://ostatus.org/schema/1.0/subscribe" template="http://identi.ca/main/ostatussub?profile={uri}"></Link><Link rel="http://specs.openid.net/auth/2.0/provider" href="http://identi.ca/forteller"></Link></XRD>laptop:~> 
+# laptop:~> 
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
