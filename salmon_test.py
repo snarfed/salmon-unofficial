@@ -115,4 +115,4 @@ class SalmonTest(testutil.HandlerTest):
     self.assert_multiline_equals(ENVELOPE_XML, envelope)
 
   def test_send_slap(self):
-    pass
+    self.salmon.send_slap()

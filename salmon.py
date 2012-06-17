@@ -8,6 +8,7 @@ import logging
 import json
 import appengine_config
 from webutil import util
+import django_salmon
 from django_salmon import magicsigs
 from django_salmon import utils
 
@@ -63,6 +64,7 @@ class Salmon(util.KeyNameModel):
     return self
 
   def send_slap(self):
+    django_salmon.discover_salmon_endpoint('asdf')
     util.urlfetch(salmon.endpoint, method='POST', payload=self.envelope(),
                   headers={'Content-Type': 'application/magic-envelope+xml'})
 
