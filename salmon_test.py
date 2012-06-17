@@ -23,6 +23,10 @@ SALMON_VARS = {
   'updated': '2012-05-21T02:25:25+0000',
   }
 
+USER_KEY_URL = (
+    'https://facebook-webfinger.appspot.com/user_key?'
+    'uri=acct:212038@facebook-webfinger.appspot.com&secret=my_secret')
+
 USER_KEY_JSON = {
   'public_exponent': 'AQAB',
   'private_exponent': 'FxCZ_ZWc1w77bAkBQQKUSvwZfaItwmIQRQ3A-KXVsL7Ay5D6tt5jbpQRmgBAYcVDXicq1fV7qa8cVT1Ed9_DusxXYGE=',
@@ -75,7 +79,7 @@ hOR6i-xZZ7Q5Aj_KNPSF1rYIgJbX3kqw90QCO6Rrv2KQW7cWC1gITOpfSyd2slek2NQLwSj4vzBecvD-
 </me:sig>
 
 </me:env>
-"""
+""".replace('\n', '')
 
 
 class SalmonTest(testutil.HandlerTest):
@@ -105,23 +109,30 @@ class SalmonTest(testutil.HandlerTest):
     self.assertEqual(1, len(tasks))
 
   def test_envelope(self):
-    self.expect_urlfetch('https://facebook-webfinger.appspot.com/user_key'
-                         '?uri=acct:ryan@facebook.com&secret=my_secret',
-                         json.dumps(USER_KEY_JSON))
+    self.expect_urlfetch(USER_KEY_URL, json.dumps(USER_KEY_JSON))
     self.mox.ReplayAll()
 
-    envelope = self.salmon.envelope('acct:ryan@facebook.com')\
-        .replace('>', '>\n').replace('</', '\n</')
+    envelope = self.salmon.envelope()
     self.assert_multiline_equals(ENVELOPE_XML, envelope)
 
   def test_send_slap(self):
-    vars = dict(SALMON_VARS)
-    vars['in_reply_to'] = 'http://my.blog/post'
-    self.salmon.vars = json.dumps(vars)
+    self.mox.StubOutWithMock(salmon, 'discover_salmon_endpoint')
+    salmon.discover_salmon_endpoint(SALMON_VARS['in_reply_to'])\
+        .AndReturn('http://my/endpoint')
+    self.expect_urlfetch(USER_KEY_URL, json.dumps(USER_KEY_JSON))
+    self.expect_urlfetch('http://my/endpoint', 'response', method='POST',
+                         headers=salmon.SLAP_HTTP_HEADERS, payload=ENVELOPE_XML)
+    self.mox.ReplayAll()
 
-    # self.expect_urlfetch('http://my.blog/post', 'x')
-                         
-    # self.salmon.send_slap()
+    self.salmon.send_slap()
+
+  def test_send_slap__no_endpoint_found(self):
+    self.mox.StubOutWithMock(salmon, 'discover_salmon_endpoint')
+    salmon.discover_salmon_endpoint(SALMON_VARS['in_reply_to']).AndReturn(None)
+    # expect no urlfetch to send the slap
+    self.mox.ReplayAll()
+
+    self.salmon.send_slap()
 
   def test_discover_salmon_endpoint__found_in_html(self):
     self.expect_urlfetch(

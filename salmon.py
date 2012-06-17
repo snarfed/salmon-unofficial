@@ -20,6 +20,9 @@ from google.appengine.ext import db
 
 FEED_MIME_TYPES = ('application/rss+xml', 'application/atom+xml')
 
+# sent with salmon slaps
+SLAP_HTTP_HEADERS = {'Content-Type': 'application/magic-envelope+xml'}
+
 # temporary URL for fetching magic sig private keys from webfinger-unofficial
 USER_KEY_HANDLER = \
     'https://facebook-webfinger.appspot.com/user_key?uri=%s&secret=%s'
@@ -68,34 +71,21 @@ class Salmon(util.KeyNameModel):
     return self
 
   def send_slap(self):
-    url = json.loads(self.vars)['in_reply_to']
+    vars = json.loads(self.vars)
+    url = vars['in_reply_to']
+    logging.info('Trying to send slap:\n%r', vars)
 
-    # TODO(paulosman)
-    # really crappy HTTP client right now. Can improve when the basic
-    # protocol flow is working.
-    headers = {
-        'Content-Type': 'application/magic-envelope+xml',
-    }
-    req = urllib2.Request(sub.salmon_endpoint, magic_envelope, headers)
-    try:
-        response = urllib2.urlopen(req)
-        print response.read()
-    except urllib2.HTTPError, e:
-        print repr(e)
-        print e.read()
+    endpoint = discover_salmon_endpoint(url)
+    if endpoint:
+      resp = util.urlfetch(endpoint, method='POST',
+                           payload=self.envelope(), headers=SLAP_HTTP_HEADERS)
+      logging.info('Sent slap to %r. Response: %r', endpoint, resp)
 
-    util.urlfetch(salmon.endpoint, method='POST', payload=self.envelope(),
-                  headers={'Content-Type': 'application/magic-envelope+xml'})
-
-  def envelope(self, author_uri):
-    """Signs and encloses an Atom Salmon in a Magic Signature envelope.
+  def envelope(self):
+    """Signs and encloses this salmon in a Magic Signature envelope.
 
     Fetches the author's Magic Signatures public key via LRDD in order to create
     the signature.
-
-    Args:
-      salmon: string, an Atom Salmon
-      author_uri: string, the author's URI, beginning with acct:
 
     Returns: JSON dict following Magic Signatures spec section 3.5:
     http://salmon-protocol.googlecode.com/svn/trunk/draft-panzer-magicsig-01.html#anchor5
@@ -104,9 +94,11 @@ class Salmon(util.KeyNameModel):
       def __init__(self, **kwargs):
         vars(self).update(**kwargs)
 
-    key_url = USER_KEY_HANDLER % (author_uri, appengine_config.USER_KEY_HANDLER_SECRET)
+    salmon_vars = json.loads(self.vars)
+    key_url = USER_KEY_HANDLER % (salmon_vars['author_uri'],
+                                  appengine_config.USER_KEY_HANDLER_SECRET)
     key = UserKey(**json.loads(util.urlfetch(key_url)))
-    return magicsigs.magic_envelope(ATOM_SALMON_TEMPLATE % json.loads(self.vars),
+    return magicsigs.magic_envelope(ATOM_SALMON_TEMPLATE % salmon_vars,
                                     'application/atom+xml', key)
 
 
@@ -118,11 +110,13 @@ def discover_salmon_endpoint(url):
 
   Returns: string URL or None
   """
+  logging.debug('Discovering salmon endpoint for %r', url)
   body = util.urlfetch(url)
 
   # first look in the document itself
   endpoint = django_salmon.discover_salmon_endpoint(body)
   if endpoint:
+    logging.debug('Found in original document: %r', endpoint)
     return endpoint
 
   # next look in its feed, if any
@@ -136,9 +130,15 @@ def discover_salmon_endpoint(url):
     if href and ('feed' in rels or 'alternate' in rels):
       endpoint = django_salmon.discover_salmon_endpoint(util.urlfetch(href))
       if endpoint:
+        logging.debug('Found in feed: %r', endpoint)
         return endpoint
 
   # finally, look in /.well-known/host-meta
   host_meta_url = 'http://%s/.well-known/host-meta' % util.domain_from_link(url)
-  return django_salmon.discover_salmon_endpoint(util.urlfetch(host_meta_url))
+  endpoint = django_salmon.discover_salmon_endpoint(util.urlfetch(host_meta_url))
+  if endpoint:
+    logging.debug('Found in host-meta: %r', endpoint)
+    return endpoint
 
+  logging.debug('No salmon endpoint found!')
+  return None
