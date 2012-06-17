@@ -22,10 +22,18 @@ ACTIVITY_JSON = {
     },
   'object': {
     'content': 'moire patterns: the new look for spring.',
-    'attachments': [{
-        'objectType': 'article',
-        'url': 'http://foo/bar',
-        }],
+    'attachments': [
+      {'objectType': 'note',
+       'content': 'xyz',
+       },
+      {'objectType': 'article',
+       'url': 'http://foo/bar',
+       },
+      {'objectType': 'photo',
+       'image': {},
+       'fullImage': {},
+       },
+      ],
     },
   }
 ACTIVITY_SALMON_VARS = {
@@ -88,13 +96,19 @@ class GooglePlusTest(testutil.HandlerTest):
                        self.googleplus.activity_to_salmon_vars(COMMENT_JSON))
 
   def test_get_salmon(self):
+    # this one should be dropped
+    without_link = copy.deepcopy(ACTIVITY_SALMON_VARS)
+    without_link['in_reply_to'] = None
+
     GooglePlusService.call_with_creds('my gae user id', 'activities.list',
                                       userId='x', collection='public',
                                       maxResults=100)\
-        .AndReturn({'items': [ACTIVITY_JSON]})
+        .AndReturn({'items': [ACTIVITY_JSON, without_link]})
+
     GooglePlusService.call_with_creds('my gae user id', 'comments.list',
                                       activityId='123', maxResults=100)\
         .AndReturn({'items': [COMMENT_JSON]})
+
     self.mox.ReplayAll()
 
     self.googleplus.owner = models.User(key_name='my gae user id')

@@ -133,7 +133,8 @@ class GooglePlus(models.Source):
     # find the attached link, if any
     link = None
     for attachment in activity.get('object', {}).get('attachments', []):
-      link = attachment.get('url')
+      if attachment.get('objectType') == 'article':
+        link = attachment.get('url')
 
     vars = {
       'id': util.tag_uri(self.DOMAIN, activity.get('id')),
@@ -163,12 +164,13 @@ class GooglePlus(models.Source):
 
     for activity in activities['items']:
       salmon = self.activity_to_salmon_vars(activity)
-      salmons.append(salmon)
 
       # only take activities with links
       link = salmon['in_reply_to']
       if not link:
         continue
+
+      salmons.append(salmon)
 
       comments = GooglePlusService.call_with_creds(
         self.owner.key().name(), 'comments.list', activityId=activity['id'],
