@@ -122,7 +122,12 @@ class PropagateTest(TaskQueueTest):
     #   UnexpectedMethodCallError: Unexpected method call: __call__() -> None.
     #     Expecting: __call__(<function <lambda> at 0x363b758>) -> None
     self.slaps = []
+    self.orig_send_slap = Salmon.send_slap
     Salmon.send_slap = lambda salmon: self.slaps.append(salmon)
+
+  def tearDown(self):
+    Salmon.send_slap = self.orig_send_slap
+    super(PropagateTest, self).tearDown()
 
   def assert_salmon_is(self, status, leased_until=False):
     """Asserts that self.salmon has the given values in the datastore.
