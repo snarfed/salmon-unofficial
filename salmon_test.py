@@ -17,8 +17,7 @@ SALMON_VARS = {
   'id': 'tag:facebook.com,2012:10102828452385634_39170557',
   'author_name': 'Ryan Barrett',
   'author_uri': 'acct:212038@facebook-webfinger.appspot.com',
-  # this would normally be the original blog post
-  'in_reply_to': 'tag:facebook.com,2012:10102828452385634',
+  'in_reply_to': 'http://my.blog/post',
   'content': 'moire patterns: the new look for spring.',
   'title': 'moire patterns: the new look for spring.',
   'updated': '2012-05-21T02:25:25+0000',
@@ -36,7 +35,7 @@ USER_KEY_JSON = {
 
 ENVELOPE_JSON = {
   # this is base64.urlsafe_b64encode(ATOM_SALMON_TEMPLATE % SALMON_VARS)
-  'data':    'PD94bWwgdmVyc2lvbj0nMS4wJyBlbmNvZGluZz0nVVRGLTgnPz4KPGVudHJ5IHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDA1L0F0b20nPgogIDxpZD50YWc6ZmFjZWJvb2suY29tLDIwMTI6MTAxMDI4Mjg0NTIzODU2MzRfMzkxNzA1NTc8L2lkPgogIDxhdXRob3I-CiAgICA8bmFtZT5SeWFuIEJhcnJldHQ8L25hbWU-CiAgICA8dXJpPmFjY3Q6MjEyMDM4QGZhY2Vib29rLXdlYmZpbmdlci5hcHBzcG90LmNvbTwvdXJpPgogIDwvYXV0aG9yPgogIDx0aHI6aW4tcmVwbHktdG8geG1sbnM6dGhyPSdodHRwOi8vcHVybC5vcmcvc3luZGljYXRpb24vdGhyZWFkLzEuMCcKICAgIHJlZj0ndGFnOmZhY2Vib29rLmNvbSwyMDEyOjEwMTAyODI4NDUyMzg1NjM0Jz4KICAgIHRhZzpmYWNlYm9vay5jb20sMjAxMjoxMDEwMjgyODQ1MjM4NTYzNAogIDwvdGhyOmluLXJlcGx5LXRvPgogIDxjb250ZW50Pm1vaXJlIHBhdHRlcm5zOiB0aGUgbmV3IGxvb2sgZm9yIHNwcmluZy48L2NvbnRlbnQ-CiAgPHRpdGxlPm1vaXJlIHBhdHRlcm5zOiB0aGUgbmV3IGxvb2sgZm9yIHNwcmluZy48L3RpdGxlPgogIDx1cGRhdGVkPjIwMTItMDUtMjFUMDI6MjU6MjUrMDAwMDwvdXBkYXRlZD4KPC9lbnRyeT4',
+  'data': 'PD94bWwgdmVyc2lvbj0nMS4wJyBlbmNvZGluZz0nVVRGLTgnPz4KPGVudHJ5IHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDA1L0F0b20nPgogIDxpZD50YWc6ZmFjZWJvb2suY29tLDIwMTI6MTAxMDI4Mjg0NTIzODU2MzRfMzkxNzA1NTc8L2lkPgogIDxhdXRob3I-CiAgICA8bmFtZT5SeWFuIEJhcnJldHQ8L25hbWU-CiAgICA8dXJpPmFjY3Q6MjEyMDM4QGZhY2Vib29rLXdlYmZpbmdlci5hcHBzcG90LmNvbTwvdXJpPgogIDwvYXV0aG9yPgogIDx0aHI6aW4tcmVwbHktdG8geG1sbnM6dGhyPSdodHRwOi8vcHVybC5vcmcvc3luZGljYXRpb24vdGhyZWFkLzEuMCcKICAgIHJlZj0naHR0cDovL215LmJsb2cvcG9zdCc-CiAgICBodHRwOi8vbXkuYmxvZy9wb3N0CiAgPC90aHI6aW4tcmVwbHktdG8-CiAgPGNvbnRlbnQ-bW9pcmUgcGF0dGVybnM6IHRoZSBuZXcgbG9vayBmb3Igc3ByaW5nLjwvY29udGVudD4KICA8dGl0bGU-bW9pcmUgcGF0dGVybnM6IHRoZSBuZXcgbG9vayBmb3Igc3ByaW5nLjwvdGl0bGU-CiAgPHVwZGF0ZWQ-MjAxMi0wNS0yMVQwMjoyNToyNSswMDAwPC91cGRhdGVkPgo8L2VudHJ5Pg==',
   'data_type': 'application/atom+xml',
   'encoding': 'base64url',
   'alg': 'RSA-SHA256',
@@ -56,18 +55,16 @@ ENVELOPE_JSON = {
   # >>> base64.urlsafe_b64encode('RSA-SHA256').rstrip('=')
   # 'UlNBLVNIQTI1Ng'
   # ...
-  # PD94bWwgdmVyc2lvbj0nMS4wJyBlbmNvZGluZz0nVVRGLTgnPz4KPGVudHJ5IHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDA1L0F0b20nPgogIDxpZD50YWc6ZmFjZWJvb2suY29tLDIwMTI6MTAxMDI4Mjg0NTIzODU2MzRfMzkxNzA1NTc8L2lkPgogIDxhdXRob3I-CiAgICA8bmFtZT5SeWFuIEJhcnJldHQ8L25hbWU-CiAgICA8dXJpPmFjY3Q6MjEyMDM4QGZhY2Vib29rLXdlYmZpbmdlci5hcHBzcG90LmNvbTwvdXJpPgogIDwvYXV0aG9yPgogIDx0aHI6aW4tcmVwbHktdG8geG1sbnM6dGhyPSdodHRwOi8vcHVybC5vcmcvc3luZGljYXRpb24vdGhyZWFkLzEuMCcKICAgIHJlZj0ndGFnOmZhY2Vib29rLmNvbSwyMDEyOjEwMTAyODI4NDUyMzg1NjM0Jz4KICAgIHRhZzpmYWNlYm9vay5jb20sMjAxMjoxMDEwMjgyODQ1MjM4NTYzNAogIDwvdGhyOmluLXJlcGx5LXRvPgogIDxjb250ZW50Pm1vaXJlIHBhdHRlcm5zOiB0aGUgbmV3IGxvb2sgZm9yIHNwcmluZy48L2NvbnRlbnQ-CiAgPHRpdGxlPm1vaXJlIHBhdHRlcm5zOiB0aGUgbmV3IGxvb2sgZm9yIHNwcmluZy48L3RpdGxlPgogIDx1cGRhdGVkPjIwMTItMDUtMjFUMDI6MjU6MjUrMDAwMDwvdXBkYXRlZD4KPC9lbnRyeT4.YXBwbGljYXRpb24vYXRvbSt4bWw.YmFzZTY0dXJs.UlNBLVNIQTI1Ng
   'sigs': [{
-      # this is what sign.sh says, but it's not right. not sure why. :/
-      # 'value': 'PbwL0bMBBQNW_yxS1nutL2lni31fbpS1Q6LA8fDKt3cbCSzdxPZEbmoL-xnVu3ilelWeiCvzrVXVjMWEnsnVX-bCWi-_zuEwdKOw2Fgn0ejYcY_OJYgpdZYskWOPzErLBPhI0fUf0-jDjG-roiLVmjsdZDlvGDeCspQIXkRw6uk',
-      'value': 'hOR6i-xZZ7Q5Aj_KNPSF1rYIgJbX3kqw90QCO6Rrv2KQW7cWC1gITOpfSyd2slek2NQLwSj4vzBecvD-16Jb-YpcBiD6Roppok4t4aZrJppX6ZZZ6i6T3FGPEiH1_yl_QeIfDXduS-bwS5KETvtvQIRSd8FK0CBK686D4YhfrHY=',
+      # sign.sh says it's something else. not sure why. :/
+      'value': 'ZT07BcAOjdQuVTTnfR9Eq5pAZBLzhllbd3794tAeOYh3QVGSH4KjgBUEWfRsdFPrFJdAw1ZTWjP-59Qw014DPgUov1fIEwQ4ck1Q6BJS0PLLgeDKAwbuar2PL6Iw4mZ0s7FYorMTDtzUGV2sp-P_iHc0JXu2J63jwzSdzwCJwA0=',
       }],
   }
 
 ENVELOPE_XML = """\
 <me:env xmlns:me="http://salmon-protocol.org/ns/magic-env">
 <me:data type="application/atom+xml">
-PD94bWwgdmVyc2lvbj0nMS4wJyBlbmNvZGluZz0nVVRGLTgnPz4KPGVudHJ5IHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDA1L0F0b20nPgogIDxpZD50YWc6ZmFjZWJvb2suY29tLDIwMTI6MTAxMDI4Mjg0NTIzODU2MzRfMzkxNzA1NTc8L2lkPgogIDxhdXRob3I-CiAgICA8bmFtZT5SeWFuIEJhcnJldHQ8L25hbWU-CiAgICA8dXJpPmFjY3Q6MjEyMDM4QGZhY2Vib29rLXdlYmZpbmdlci5hcHBzcG90LmNvbTwvdXJpPgogIDwvYXV0aG9yPgogIDx0aHI6aW4tcmVwbHktdG8geG1sbnM6dGhyPSdodHRwOi8vcHVybC5vcmcvc3luZGljYXRpb24vdGhyZWFkLzEuMCcKICAgIHJlZj0ndGFnOmZhY2Vib29rLmNvbSwyMDEyOjEwMTAyODI4NDUyMzg1NjM0Jz4KICAgIHRhZzpmYWNlYm9vay5jb20sMjAxMjoxMDEwMjgyODQ1MjM4NTYzNAogIDwvdGhyOmluLXJlcGx5LXRvPgogIDxjb250ZW50Pm1vaXJlIHBhdHRlcm5zOiB0aGUgbmV3IGxvb2sgZm9yIHNwcmluZy48L2NvbnRlbnQ-CiAgPHRpdGxlPm1vaXJlIHBhdHRlcm5zOiB0aGUgbmV3IGxvb2sgZm9yIHNwcmluZy48L3RpdGxlPgogIDx1cGRhdGVkPjIwMTItMDUtMjFUMDI6MjU6MjUrMDAwMDwvdXBkYXRlZD4KPC9lbnRyeT4=
+PD94bWwgdmVyc2lvbj0nMS4wJyBlbmNvZGluZz0nVVRGLTgnPz4KPGVudHJ5IHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDA1L0F0b20nPgogIDxpZD50YWc6ZmFjZWJvb2suY29tLDIwMTI6MTAxMDI4Mjg0NTIzODU2MzRfMzkxNzA1NTc8L2lkPgogIDxhdXRob3I-CiAgICA8bmFtZT5SeWFuIEJhcnJldHQ8L25hbWU-CiAgICA8dXJpPmFjY3Q6MjEyMDM4QGZhY2Vib29rLXdlYmZpbmdlci5hcHBzcG90LmNvbTwvdXJpPgogIDwvYXV0aG9yPgogIDx0aHI6aW4tcmVwbHktdG8geG1sbnM6dGhyPSdodHRwOi8vcHVybC5vcmcvc3luZGljYXRpb24vdGhyZWFkLzEuMCcKICAgIHJlZj0naHR0cDovL215LmJsb2cvcG9zdCc-CiAgICBodHRwOi8vbXkuYmxvZy9wb3N0CiAgPC90aHI6aW4tcmVwbHktdG8-CiAgPGNvbnRlbnQ-bW9pcmUgcGF0dGVybnM6IHRoZSBuZXcgbG9vayBmb3Igc3ByaW5nLjwvY29udGVudD4KICA8dGl0bGU-bW9pcmUgcGF0dGVybnM6IHRoZSBuZXcgbG9vayBmb3Igc3ByaW5nLjwvdGl0bGU-CiAgPHVwZGF0ZWQ-MjAxMi0wNS0yMVQwMjoyNToyNSswMDAwPC91cGRhdGVkPgo8L2VudHJ5Pg==
 </me:data>
 <me:encoding>
 base64url
@@ -76,7 +73,7 @@ base64url
 RSA-SHA256
 </me:alg>
 <me:sig>
-hOR6i-xZZ7Q5Aj_KNPSF1rYIgJbX3kqw90QCO6Rrv2KQW7cWC1gITOpfSyd2slek2NQLwSj4vzBecvD-16Jb-YpcBiD6Roppok4t4aZrJppX6ZZZ6i6T3FGPEiH1_yl_QeIfDXduS-bwS5KETvtvQIRSd8FK0CBK686D4YhfrHY=
+ZT07BcAOjdQuVTTnfR9Eq5pAZBLzhllbd3794tAeOYh3QVGSH4KjgBUEWfRsdFPrFJdAw1ZTWjP-59Qw014DPgUov1fIEwQ4ck1Q6BJS0PLLgeDKAwbuar2PL6Iw4mZ0s7FYorMTDtzUGV2sp-P_iHc0JXu2J63jwzSdzwCJwA0=
 </me:sig>
 
 </me:env>
@@ -117,9 +114,8 @@ class SalmonTest(testutil.HandlerTest):
     self.assert_multiline_equals(ENVELOPE_XML, envelope)
 
   def test_send_slap(self):
-    self.mox.StubOutWithMock(salmon, 'discover_salmon_endpoint')
-    salmon.discover_salmon_endpoint(SALMON_VARS['in_reply_to'])\
-        .AndReturn('http://my/endpoint')
+    self.mox.StubOutWithMock(self.salmon, 'discover_salmon_endpoint')
+    self.salmon.discover_salmon_endpoint().AndReturn('http://my/endpoint')
     self.expect_urlfetch(USER_KEY_URL, json.dumps(USER_KEY_JSON))
     self.expect_urlfetch('http://my/endpoint', 'response', method='POST',
                          headers=salmon.SLAP_HTTP_HEADERS, payload=ENVELOPE_XML)
@@ -128,26 +124,24 @@ class SalmonTest(testutil.HandlerTest):
     self.salmon.send_slap()
 
   def test_send_slap__no_endpoint_found(self):
-    self.mox.StubOutWithMock(salmon, 'discover_salmon_endpoint')
-    salmon.discover_salmon_endpoint(SALMON_VARS['in_reply_to']).AndReturn(None)
+    self.mox.StubOutWithMock(self.salmon, 'discover_salmon_endpoint')
+    self.salmon.discover_salmon_endpoint().AndReturn(None)
     # expect no urlfetch to send the slap
     self.mox.ReplayAll()
 
     self.salmon.send_slap()
 
   def test_send_slap__error_discovering_endpoint(self):
-    self.mox.StubOutWithMock(salmon, 'discover_salmon_endpoint')
-    salmon.discover_salmon_endpoint(SALMON_VARS['in_reply_to'])\
-        .AndRaise(exc.HTTPNotFound())
+    self.mox.StubOutWithMock(self.salmon, 'discover_salmon_endpoint')
+    self.salmon.discover_salmon_endpoint().AndRaise(exc.HTTPNotFound())
     # expect no urlfetch to send the slap
     self.mox.ReplayAll()
 
     self.salmon.send_slap()
 
   def test_send_slap__error_sending(self):
-    self.mox.StubOutWithMock(salmon, 'discover_salmon_endpoint')
-    salmon.discover_salmon_endpoint(SALMON_VARS['in_reply_to'])\
-        .AndReturn('http://my/endpoint')
+    self.mox.StubOutWithMock(self.salmon, 'discover_salmon_endpoint')
+    self.salmon.discover_salmon_endpoint().AndReturn('http://my/endpoint')
     self.expect_urlfetch(USER_KEY_URL, json.dumps(USER_KEY_JSON))
     self.expect_urlfetch('http://my/endpoint', 'response', method='POST',
                          headers=salmon.SLAP_HTTP_HEADERS, payload=ENVELOPE_XML,
@@ -158,15 +152,14 @@ class SalmonTest(testutil.HandlerTest):
 
   def test_discover_salmon_endpoint__found_in_html(self):
     self.expect_urlfetch(
-      'my.blog/post',
+      'http://my.blog/post',
       '<html><head><link rel="salmon" href="my endpoint" /></head></html>')
     self.mox.ReplayAll()
 
-    self.assertEquals('my endpoint',
-                      salmon.discover_salmon_endpoint('my.blog/post'))
+    self.assertEquals('my endpoint', self.salmon.discover_salmon_endpoint())
 
   def test_discover_salmon_endpoint__found_in_feed(self):
-    self.expect_urlfetch('my.blog/post', """
+    self.expect_urlfetch('http://my.blog/post', """
 <html><head>
 <link rel="foo alternate" type="application/rss+xml" href="my.blog/feed" />
 </head></html>""")
@@ -176,22 +169,33 @@ class SalmonTest(testutil.HandlerTest):
 </channel></rss>""")
     self.mox.ReplayAll()
 
-    self.assertEquals('my endpoint',
-                      salmon.discover_salmon_endpoint('my.blog/post'))
+    self.assertEquals('my endpoint', self.salmon.discover_salmon_endpoint())
 
   def test_discover_salmon_endpoint__found_in_hostmeta(self):
-    self.expect_urlfetch('my.blog/post', '<html></html>')
+    self.expect_urlfetch('http://my.blog/post', '<html></html>')
     self.expect_urlfetch(
       'http://my.blog/.well-known/host-meta',
       '<XRD><Link rel="salmon" href="my endpoint"></Link></XRD>')
     self.mox.ReplayAll()
 
-    self.assertEquals('my endpoint',
-                      salmon.discover_salmon_endpoint('my.blog/post'))
+    self.assertEquals('my endpoint', self.salmon.discover_salmon_endpoint())
 
+  # not ready yet. see the TODO in the salmon.py docstring.
+  #
+  # def test_discover_salmon_endpoint__found_in_user_lrdd(self):
+  #   self.expect_urlfetch('http://my.blog/post', '<html></html>')
+  #   self.expect_urlfetch(
+  #     'http://my.blog/.well-known/host-meta',
+  #     '<XRD><Link rel="lrdd" template="http://foo/{uri}/bar"></Link></XRD>')
+  #   self.expect_urlfetch(
+  #     'http://foo/acct:',
+  #     '<XRD><Link rel="lrdd" template="http://foo/{uri}/bar"></Link></XRD>')
+  #   self.mox.ReplayAll()
+
+  #   self.assertEquals('my endpoint', self.salmon.discover_salmon_endpoint())
 
   def test_discover_salmon_endpoint__not_found(self):
-    self.expect_urlfetch('my.blog/post', """
+    self.expect_urlfetch('http://my.blog/post', """
 <html><head>
 <link rel="foo alternate" type="application/rss+xml" href="my.blog/feed" />
 </head></html>""")
@@ -199,4 +203,4 @@ class SalmonTest(testutil.HandlerTest):
     self.expect_urlfetch('http://my.blog/.well-known/host-meta', '<XRD></XRD>')
     self.mox.ReplayAll()
 
-    self.assertEquals(None, salmon.discover_salmon_endpoint('my.blog/post'))
+    self.assertEquals(None, self.salmon.discover_salmon_endpoint())

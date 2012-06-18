@@ -1,13 +1,69 @@
 #!/usr/bin/python
-"""Salmon model class."""
-# STATE: need to do extra LRDD lookup for salmon link
+"""Salmon model class.
 
-# curl http://identi.ca/.well-known/host-meta
-# <?xml version="1.0" encoding="UTF-8"?>
-# <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0"><hm:Host xmlns:hm="http://host-meta.net/xrd/1.0">identi.ca</hm:Host><Link rel="lrdd" template="http://identi.ca/main/xrd?uri={uri}"><Title>Resource Descriptor</Title></Link></XRD>laptop:~> curl 'http://identi.ca/main/xrd?uri=acct:forteller@identi.ca'
-# <?xml version="1.0" encoding="UTF-8"?>
-# <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0"><Subject>acct:forteller@identi.ca</Subject><Alias>http://identi.ca/user/9896</Alias><Alias>http://identi.ca/forteller</Alias><Link rel="http://webfinger.net/rel/profile-page" type="text/html" href="http://identi.ca/forteller"></Link><Link rel="http://gmpg.org/xfn/11" type="text/html" href="http://identi.ca/forteller"></Link><Link rel="describedby" type="application/rdf+xml" href="http://identi.ca/forteller/foaf"></Link><Link rel="http://apinamespace.org/atom" type="application/atomsvc+xml" href="http://identi.ca/api/statusnet/app/service/forteller.xml"><Property type="http://apinamespace.org/atom/username">forteller</Property></Link><Link rel="http://apinamespace.org/twitter" href="https://identi.ca/api/"><Property type="http://apinamespace.org/twitter/username">forteller</Property></Link><Link rel="http://schemas.google.com/g/2010#updates-from" href="http://identi.ca/api/statuses/user_timeline/9896.atom" type="application/atom+xml"></Link><Link rel="salmon" href="http://identi.ca/main/salmon/user/9896"></Link><Link rel="http://salmon-protocol.org/ns/salmon-replies" href="http://identi.ca/main/salmon/user/9896"></Link><Link rel="http://salmon-protocol.org/ns/salmon-mention" href="http://identi.ca/main/salmon/user/9896"></Link><Link rel="magic-public-key" href="data:application/magic-public-key,RSA.ohR-_jdQ5yQeGPBzTPysQvTav93FL-P_5yVfvJl1sUQBdRA7dFZpqR83vJOnsgHbO3KEo8yKadWNCrS6A-IJZn2tHrxHTJ1lasXGkNxGQuIKt3hsZXsEvChqNZrq8cqDXXOl6vMCWccBVO1w6HCXHtfgZRhrC6tbDUtXlhHd_O0=.AQAB"></Link><Link rel="http://ostatus.org/schema/1.0/subscribe" template="http://identi.ca/main/ostatussub?profile={uri}"></Link><Link rel="http://specs.openid.net/auth/2.0/provider" href="http://identi.ca/forteller"></Link></XRD>laptop:~> 
-# laptop:~> 
+TODO
+- don't include user themselves? (option?)
+- log in/out, only delete your own sources
+- switch plus.json
+- cache endpoint discovery
+
+TODO: salmon endpoint disovery doesn't work for some salmon implementations.
+status.net, for example, supports it via XRD/LRDD, but you need to know the
+user's URI, or at least their username, and I don't know how to do that
+programmatically based on a post URL.
+
+For example, if you read it in a browser as a human, it's clear that
+http://identi.ca/notice/94643764 was written by a user with the username
+forteller. Armed with that knowledge, you can follow the LRDD Link in
+http://identi.ca/.well-known/host-meta and get
+http://identi.ca/main/xrd?uri=acct:forteller@identi.ca , which tells you that
+forteller's salmon reply endpoint is http://identi.ca/main/salmon/user/9896 .
+
+However, how would you write code to determine that the author of
+http://identi.ca/notice/94643764 is acct:forteller@identi.ca ? The string
+forteller only shows up in the page title and in uremarkable h1 and anchor
+elements. There also aren't any link rel="alternate" elements in the header that
+point to feeds.
+
+Even if you somehow guessed that the top level stream page was
+http://identi.ca/forteller , and autodiscovered a feed like
+http://identi.ca/forteller/rss , even *that* doesn't easily lead you to
+acct:forteller@identi.ca or even forteller. Grr. :(
+"""
+
+# - fix this in all three
+# INFO     2012-06-17 17:26:00,986 salmon.py:87] Trying to send slap:
+# {u'author_uri': u'acct:102984255052142775811@gmail.com', u'updated': u'2012-06-03T05:33:10.789Z', u'title': u'Thats going on now', u'author_name': u'Kelo Nelson', u'content': u'Thats going on now', u'in_reply_to': u'https://plus.google.com/photos/103651231634018158746/albums/5749677294085736961/5749677297497774114', u'id': u'tag:plus.google.com,2012:ccg0o1_OvkYgU5SIe8zKyJulbJ16Qp_fVvw5wcceWHEfXXAL-gO2rdf3MgxPmHcw2457EmQs9cc'}
+# DEBUG    2012-06-17 17:26:00,986 salmon.py:132] Discovering salmon endpoint for u'https://plus.google.com/photos/103651231634018158746/albums/5749677294085736961/5749677297497774114'
+# DEBUG    2012-06-17 17:26:00,986 util.py:56] Fetching https://plus.google.com/photos/103651231634018158746/albums/5749677294085736961/5749677297497774114 with kwargs {}
+# DEBUG    2012-06-17 17:26:00,986 urlfetch_stub.py:317] Making HTTP request: host = plus.google.com, url = https://plus.google.com/photos/103651231634018158746/albums/5749677294085736961/5749677297497774114, payload = , headers = {'Host': 'plus.google.com', 'Accept-Encoding': 'gzip', 'User-Agent': 'AppEngine-Google; (+http://code.google.com/appengine)'}
+# DEBUG    2012-06-17 17:26:01,393 dev_appserver_import_hook.py:1497] Access to module file denied: /usr/lib/pymodules/python2.6/drv_libxml2.py
+# DEBUG    2012-06-17 17:26:01,398 dev_appserver_import_hook.py:1497] Access to module file denied: /usr/lib/pymodules/python2.6/drv_libxml2.py
+# DEBUG    2012-06-17 17:26:01,401 util.py:56] Fetching http://plus.google.com/.well-known/host-meta with kwargs {}
+# DEBUG    2012-06-17 17:26:01,401 urlfetch_stub.py:317] Making HTTP request: host = plus.google.com, url = http://plus.google.com/.well-known/host-meta, payload = , headers = {'Host': 'plus.google.com', 'Accept-Encoding': 'gzip', 'User-Agent': 'AppEngine-Google; (+http://code.google.com/appengine)'}
+# ERROR    2012-06-17 17:26:01,493 traceback.py:13] Traceback (most recent call last):
+# ERROR    2012-06-17 17:26:01,493 traceback.py:13]   File "/usr/lib/python2.6/logging/__init__.py", line 768, in emit
+# ERROR    2012-06-17 17:26:01,493 traceback.py:13]     msg = self.format(record)
+# ERROR    2012-06-17 17:26:01,494 traceback.py:13]   File "/usr/lib/python2.6/logging/__init__.py", line 648, in format
+# ERROR    2012-06-17 17:26:01,494 traceback.py:13]     return fmt.format(record)
+# ERROR    2012-06-17 17:26:01,494 traceback.py:13]   File "/usr/lib/python2.6/logging/__init__.py", line 436, in format
+# ERROR    2012-06-17 17:26:01,494 traceback.py:13]     record.message = record.getMessage()
+# ERROR    2012-06-17 17:26:01,495 traceback.py:13]   File "/usr/lib/python2.6/logging/__init__.py", line 306, in getMessage
+# ERROR    2012-06-17 17:26:01,495 traceback.py:13]     msg = msg % self.args
+# ERROR    2012-06-17 17:26:01,495 traceback.py:13] TypeError: not enough arguments for format string
+# ERROR    2012-06-17 17:26:01,495 traceback.py:13] Traceback (most recent call last):
+# ERROR    2012-06-17 17:26:01,496 traceback.py:13]   File "/home/ryanb/google_appengine/google/appengine/api/app_logging.py", line 90, in emit
+# ERROR    2012-06-17 17:26:01,496 traceback.py:13]     message = self._AppLogsMessage(record)
+# ERROR    2012-06-17 17:26:01,496 traceback.py:13]   File "/home/ryanb/google_appengine/google/appengine/api/app_logging.py", line 108, in _AppLogsMessage
+# ERROR    2012-06-17 17:26:01,496 traceback.py:13]     message = self.format(record).replace("\r\n", NEWLINE_REPLACEMENT)
+# ERROR    2012-06-17 17:26:01,496 traceback.py:13]   File "/usr/lib/python2.6/logging/__init__.py", line 648, in format
+# ERROR    2012-06-17 17:26:01,497 traceback.py:13]     return fmt.format(record)
+# ERROR    2012-06-17 17:26:01,497 traceback.py:13]   File "/usr/lib/python2.6/logging/__init__.py", line 436, in format
+# ERROR    2012-06-17 17:26:01,497 traceback.py:13]     record.message = record.getMessage()
+# ERROR    2012-06-17 17:26:01,497 traceback.py:13]   File "/usr/lib/python2.6/logging/__init__.py", line 306, in getMessage
+# ERROR    2012-06-17 17:26:01,498 traceback.py:13]     msg = msg % self.args
+# ERROR    2012-06-17 17:26:01,498 traceback.py:13] TypeError: not enough arguments for format string
+# INFO     2012-06-17 17:26:01,498 salmon.py:92] Could not discover Salmon endpoint; giving up. The resource could not be found.
 
 __author__ = ['Ryan Barrett <salmon@ryanb.org>']
 
@@ -74,27 +130,26 @@ class Salmon(util.KeyNameModel):
       logging.debug('Deferring to existing salmon %s.', existing.key().name())
       return existing
 
-    logging.debug('New salmon to propagate: %s' % self.key().name())
+    logging.debug('New salmon to propagate: %s', self.key().name())
     taskqueue.add(queue_name='propagate', params={'salmon_key': str(self.key())})
     self.save()
     return self
 
   def send_slap(self):
     vars = json.loads(self.vars)
-    url = vars['in_reply_to']
     logging.info('Trying to send slap:\n%r', vars)
 
     try:
-      endpoint = discover_salmon_endpoint(url)
+      endpoint = self.discover_salmon_endpoint()
     except exc.HTTPClientError, e:
-      logging.exception('Error discovering Salmon endpoint; giving up.')
+      logging.info('Could not discover Salmon endpoint; giving up. %s', e)
       return
 
     if endpoint:
       try:
+        logging.info('Sending slap to %r', endpoint)
         resp = util.urlfetch(endpoint, method='POST',
                              payload=self.envelope(), headers=SLAP_HTTP_HEADERS)
-        logging.info('Sent slap to %r. Response: %r', endpoint, resp)
       except exc.HTTPClientError, e:
         logging.exception('Error sending slap; giving up.')
 
@@ -118,44 +173,46 @@ class Salmon(util.KeyNameModel):
     return magicsigs.magic_envelope(ATOM_SALMON_TEMPLATE % salmon_vars,
                                     'application/atom+xml', key)
 
-
-def discover_salmon_endpoint(url):
-  """Discovers and returns the Salmon endpoint URL for a post URL.
-
-  Args:
-    url: string URL
-
-  Returns: string URL or None
-  """
-  logging.debug('Discovering salmon endpoint for %r', url)
-  body = util.urlfetch(url)
-
-  # first look in the document itself
-  endpoint = django_salmon.discover_salmon_endpoint(body)
-  if endpoint:
-    logging.debug('Found in original document: %r', endpoint)
-    return endpoint
-
-  # next look in its feed, if any
-  #
-  # background on feed autodiscovery:
-  # http://blog.whatwg.org/feed-autodiscovery
-  parsed = feedparser.parse(body)
-  for link in parsed.feed.get('links', []):
-    rels = link.get('rel').split()
-    href = link.get('href')
-    if href and ('feed' in rels or 'alternate' in rels):
-      endpoint = django_salmon.discover_salmon_endpoint(util.urlfetch(href))
-      if endpoint:
-        logging.debug('Found in feed: %r', endpoint)
-        return endpoint
-
-  # finally, look in /.well-known/host-meta
-  host_meta_url = 'http://%s/.well-known/host-meta' % util.domain_from_link(url)
-  endpoint = django_salmon.discover_salmon_endpoint(util.urlfetch(host_meta_url))
-  if endpoint:
-    logging.debug('Found in host-meta: %r', endpoint)
-    return endpoint
-
-  logging.debug('No salmon endpoint found!')
-  return None
+  def discover_salmon_endpoint(self):
+    """Discovers and returns the Salmon endpoint URL for this salmon.
+  
+    It'd be nice to use an XRD/LRDD library here, but I haven't found much.
+    github.com/jcarbaugh/python-xrd is only for generating, not reading.
+    pydataportability.net looks powerful but also crazy heavyweight; it
+    requires Zope and strongly recommends running inside virtualenv. No thanks.
+  
+    Returns: string URL or None
+    """
+    url = json.loads(self.vars)['in_reply_to']
+    logging.debug('Discovering salmon endpoint for %r', url)
+    body = util.urlfetch(url)
+  
+    # first look in the document itself
+    endpoint = django_salmon.discover_salmon_endpoint(body)
+    if endpoint:
+      logging.debug('Found in original document: %r', endpoint)
+      return endpoint
+  
+    # next, look in its feed, if any
+    #
+    # background on feed autodiscovery:
+    # http://blog.whatwg.org/feed-autodiscovery
+    parsed = feedparser.parse(body)
+    for link in parsed.feed.get('links', []):
+      rels = link.get('rel').split()
+      href = link.get('href')
+      if href and ('feed' in rels or 'alternate' in rels):
+        endpoint = django_salmon.discover_salmon_endpoint(util.urlfetch(href))
+        if endpoint:
+          logging.debug('Found in feed: %r', endpoint)
+          return endpoint
+  
+    # next, look in /.well-known/host-meta
+    host_meta_url = 'http://%s/.well-known/host-meta' % util.domain_from_link(url)
+    endpoint = django_salmon.discover_salmon_endpoint(util.urlfetch(host_meta_url))
+    if endpoint:
+      logging.debug('Found in host-meta: %r', endpoint)
+      return endpoint
+  
+    logging.debug('No salmon endpoint found!')
+    return None
