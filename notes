@@ -159,3 +159,57 @@ looks good, but tightly integrated w/django
 misc links
 ===
 http://stackoverflow.com/questions/8731750/twitter-tweets-about-a-certain-url-via-salmon-and-or-pubsubhubbub
+
+
+===
+interop
+===
+identi.ca/statusnet, need to use vcard etc to discover author url from single
+post url.
+
+https://github.com/snarfed/salmon-unofficial/commit/e9fb977961023c5d75283fcfb9fff5ddfdac778d#commitcomment-1469872
+
+Hi! Yes, unfortunately single posts seem to be not autodiscoverable by either link-tags in the html head or links in the header.
+Fortunately, the post html is annotated using microformats, so a slightly more general approach than dealing with the oembed data would be to search the html for '.vcard.author a.url' (CSS3 selector syntax) and then get the href.
+(Using Mojolicious, "mojo get 'http://identi.ca/notice/94643764' '.vcard.author a.url' attr 'href'" returns correctly http://identi.ca/forteller.)
+
+
+http://evan.status.net/notice/1388685
+http://evan.status.net/rss
+http://evan.status.net/main/salmon/user/1
+
+curl -v -H 'Content-Type: application/magic-envelope+xml' \
+  --data "<?xml version='1.0' encoding='UTF-8'?>\n<me:env xmlns:me="http://salmon-protocol.org/ns/magic-env"><me:data type="application/atom+xml">PD94bWwgdmVyc2lvbj0nMS4wJyBlbmNvZGluZz0nVVRGLTgnPz4KPGVudHJ5IHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDA1L0F0b20nPgogIDxpZD50YWc6ZmFjZWJvb2suY29tLDIwMTI6NDEwODExNDcyMjk1NDkwPC9pZD4KICA8YXV0aG9yPgogICAgPG5hbWU-UnlhbiBCYXJyZXR0PC9uYW1lPgogICAgPHVyaT5hY2N0OjIxMjAzOEBmYWNlYm9vay13ZWJmaW5nZXIuYXBwc3BvdC5jb208L3VyaT4KICA8L2F1dGhvcj4KICA8dGhyOmluLXJlcGx5LXRvIHhtbG5zOnRocj0naHR0cDovL3B1cmwub3JnL3N5bmRpY2F0aW9uL3RocmVhZC8xLjAnCiAgICByZWY9J2h0dHA6Ly9ub3RpemJsb2cub3JnLzIwMTEvMDEvMDIvZmVkZXJhdGVkcHJlc3MvJz4KICAgIGh0dHA6Ly9ub3RpemJsb2cub3JnLzIwMTEvMDEvMDIvZmVkZXJhdGVkcHJlc3MvCiAgPC90aHI6aW4tcmVwbHktdG8-CiAgPGNvbnRlbnQ-VGhhbmtzIGZvciBmaWdodGluZyB0aGUgZ29vZCBmaWdodCwgTWF0dGhpYXMhIEknbSB3cml0aW5nIHRoaXMgY29tbWVudCBvbiBGYWNlYm9vayB0byB0ZXN0IG15IHVwY29taW5nIHNhbG1vbi11bm9mZmljaWFsIGJyaWRnZSBmb3IgRmFjZWJvb2svVHdpdHRlci9Hb29nbGUrLiBGaW5nZXJzIGNyb3NzZWQhPC9jb250ZW50PgogIDx0aXRsZT5UaGFua3MgZm9yIGZpZ2h0aW5nIHRoZSBnb29kIGZpZ2h0LCBNYXR0aGlhcyEgSSdtIHdyaXRpbmcgdGhpcyBjb21tZW50IG9uIEZhY2Vib29rIHRvIHRlc3QgbXkgdXBjb21pbmcgc2FsbW9uLXVub2ZmaWNpYWwgYnJpZGdlIGZvciBGYWNlYm9vay9Ud2l0dGVyL0dvb2dsZSsuIEZpbmdlcnMgY3Jvc3NlZCE8L3RpdGxlPgogIDx1cGRhdGVkPjIwMTItMDYtMThUMDA6NDY6NTgrMDAwMDwvdXBkYXRlZD4KPC9lbnRyeT4=</me:data><me:encoding>base64url</me:encoding><me:alg>RSA-SHA256</me:alg><me:sig>afU=</me:sig></me:env>" \
+  'http://notizblog.org/?salmon=endpoint'
+
+...
+
+> POST /?salmon=endpoint HTTP/1.1
+> User-Agent: curl/7.19.7 (x86_64-pc-linux-gnu) libcurl/7.19.7 OpenSSL/0.9.8k zlib/1.2.3.3 libidn/1.15
+> Host: notizblog.org
+> Accept: */*
+> Content-Type: application/magic-envelope+xml
+> Content-Length: 1423
+> Expect: 100-continue
+> 
+< HTTP/1.1 100 Continue
+< HTTP/1.1 200 OK
+< Date: Mon, 18 Jun 2012 01:05:21 GMT
+< Server: Apache
+< X-Powered-By: PHP/5.2.17
+< Expires: Thu, 19 Nov 1981 08:52:00 GMT
+< Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0
+< Pragma: no-cache
+< X-XRDS-Location: http://notizblog.org/?xrds
+< X-Yadis-Location: http://notizblog.org/?xrds
+< X-Pingback: http://notizblog.org/xmlrpc.php
+< Set-Cookie: PHPSESSID=aca6c64f974c3d07f21e55751dc34805; path=/
+< Transfer-Encoding: chunked
+< Content-Type: text/html; charset=UTF-8
+< 
+<br />
+<b>Warning</b>:  DOMDocument::loadXML() [<a href='domdocument.loadxml'>domdocument.loadxml</a>]: Start tag expected, '&lt;' not found in Entity, line: 1 in <b>/homepages/43/d136512295/htdocs/notizblog/wp-content/plugins/salmon/magicsig.php</b> on line <b>47</b><br />
+<br />
+<b>Fatal error</b>:  Call to a member function getElementsByTagNameNS() on a non-object in <b>/homepages/43/d136512295/htdocs/notizblog/wp-content/plugins/salmon/magicsig.php</b> on line <b>52</b><br />
+* Connection #0 to host notizblog.org left intact
+* Closing connection #0

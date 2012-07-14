@@ -17,12 +17,6 @@ from webutil import webapp2
 
 from apiclient.discovery import build
 
-# hack to prevent oauth2client from trying to cache on the filesystem.
-# http://groups.google.com/group/google-appengine-python/browse_thread/thread/b48c23772dbc3334
-# must be done before importing.
-if hasattr(os, 'tempnam'):
-  delattr(os, 'tempnam')
-
 from oauth2client.appengine import CredentialsModel
 from oauth2client.appengine import OAuth2Decorator
 from oauth2client.appengine import StorageByKeyName

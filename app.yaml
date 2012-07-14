@@ -58,7 +58,6 @@ skip_files:
 - ^(.*/)?.*\.bak$
 # don't need anything in the submodule subdirs, especially since
 # webapp-improved/lib has over 1k files and feedparser/tests has over 2.3k!
-- feedparser/(docs|tests)/.*
+- ^feedparser/(docs|feedparser/tests)/.*
 - ^google-api-python-client/(docs|samples|tests)/.*
-- ^Salmon/(at-salmon|salmon-playground)/.*
-- webutil/webapp-improved/.*/.*
+- ^webutil/webapp-improved/.*/.*
