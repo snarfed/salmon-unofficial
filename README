@@ -1,7 +1,7 @@
-This is a unofficial Salmon generator for sites that don't implement it
-themselves. It's deployed at http://salmon-unofficial.appspot.com/ , and
-currently has implementations for Facebook, Twitter, and Google+. Feel free to
-add more!
+This is a Salmon conversion library and proxy server for sites that don't
+implement the Salmon protocol themselves. It's deployed at
+http://salmon-unofficial.appspot.com/ , and currently has implementations for
+Facebook, Twitter, and Google+. Feel free to add more!
 
 Source: https://github.com/snarfed/salmon-unofficial
 Contact: Ryan Barrett <salmon@ryanb.org>
