@@ -29,8 +29,8 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 # plus_api is a decorator for request handlers that need to make OAuth-based
 # calls to the Google+ REST API. we need to create it manually this way so that
 # we can use store
-plus_api = OAuth2Decorator(client_id=appengine_config.GOOGLEPLUS_CLIENT_ID,
-                           client_secret=appengine_config.GOOGLEPLUS_CLIENT_SECRET,
+plus_api = OAuth2Decorator(client_id=appengine_config.GOOGLE_CLIENT_ID,
+                           client_secret=appengine_config.GOOGLE_CLIENT_SECRET,
                            scope='https://www.googleapis.com/auth/plus.me')
 
 
