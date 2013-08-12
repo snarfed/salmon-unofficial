@@ -19,3 +19,6 @@
 [submodule "feedparser"]
 	path = feedparser
 	url = git://github.com/kurtmckee/feedparser.git
+[submodule "google-api-python-client"]
+	path = google-api-python-client
+	url = git@github.com:musicmetric/google-api-python-client.git
