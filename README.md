@@ -29,7 +29,7 @@ Just head over to https://salmon-unofficial.appspot.com/ and connect your Facebo
 Future work
 ---
 
-We're not at all confident in the interoperability and robustness. We've only done a very limited amount of testing. We should test against more Salmon-capable endpoints and fix the bug we find.
+We're not at all confident in the interoperability and robustness. We've only done a very limited amount of testing. We should test against more Salmon-capable endpoints and fix the bugs we find.
 
 We should probably also separate the Salmon conversion logic out of this so it can be used as a library as well as a service.
 
